@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <style>
+   body {
+     background: #181818;
+     color: white;
+     font-size: 16px;
+   }
+   .control-switch-container {
+     margin: 5px;
+     padding: 5px;
+     border: 5px;
+   }
+   .control-switch-label {
+     margin: 5px;
+     padding: 5px;
+     border: 5px;
+   }
+   .control-switch {
+     display: block;
+     position: relative;
+     line-height: 22px;
+     height: 22px;
+     margin: 5px;
+     padding: 5px;
+     border: 5px;
+   }
+   .control-switch input {
+     outline: 0;
+     opacity: 0;
+     width: 0;
+     height: 0;
+   }
+   .control-switch-knob {
+     width: 50px;
+     height: 22px;
+     border-radius: 22px;
+     cursor: pointer;
+     background-color: darkorange;
+   }
+   .control-switch-knob,.control-switch-knob:before {
+     display: inline-block;
+     transition: .4s;
+   }
+   .control-switch-knob:before {
+     position: relative;
+     content: "";
+     border-radius: 50%;
+     height: 16px;
+     width: 16px;
+     left: 4px;
+     top: 1px;
+     background-color: #fff;
+   }
+   input:checked+.control-switch-knob {
+     background-color: #199319
+   }
+   input:checked+.control-switch-knob:before {
+     transform: translateX(26px)
+   }
+  </style>
+  <title>Pet etc monitor admin</title>
+</head>
+<body>
+  <div class="control-switch-container">
+    <label class="control-switch-label" for="control-toggle-record-id">Toggle record</label>
+    <div class="control-switch">
+      <input id="control-toggle-record-id" type="checkbox" checked="checked" onclick="toggle_record();">
+      <label class="control-switch-knob" for="control-toggle-record-id"></label>
+      <span id="control-toggle-record-status-id">On</span>
+    </div>
+  </div>
+</body>
+<script>
+ function toggle_record() {
+   let toggle_record_control = document.getElementById("control-toggle-record-id");
+   let toggle_record_control_status = document.getElementById("control-toggle-record-status-id");
+   let record_value=toggle_record_control.checked;
+   let url="/start_record";
+   if (!record_value) {
+     url="/stop_record";
+     toggle_record_control_status.innerHTML="Not Recording";
+   } else {
+     toggle_record_control_status.innerHTML="Recording";
+   }
+   console.log(url);
+   let req=new XMLHttpRequest();
+   req.open("PUT", url, true);
+   req.onload = () => {
+   };
+   req.send();
+ }
+</script>
+</html>
