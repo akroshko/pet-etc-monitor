@@ -60,13 +60,22 @@ application has been tested on a Debian Linux 12 system.
 
 ## Installing a Python virtual environment
 
+On Debian 12 the packages corresponding to the following command
+probably need to be installed
+
+`sudo apt-get install python3 python3-venv`
+
 To install and use a virtual environment in the project directory,
 follow the instructions on the Flask website
-https://flask.palletsprojects.com/en/2.3.x/installation/.  After
-activating the virtual environment install the required packages with
-the following command.
+https://flask.palletsprojects.com/en/2.3.x/installation/.
 
-`pip3 install -r requirements.txt`
+Some commands to build (or rebuild) the default virtual environement are:
+
+`
+python3 -m venv ./venv
+source venv/bin/activate
+pip3 install -r requirements.txt
+`
 
 ## Configuration
 
@@ -98,11 +107,14 @@ to `CAPTURE_URL`, `STATUS_URL`, and `CONTROL_URL`.
 ## Running the test servers
 
 In the project directory with the appropriate virtual environment
-activated run the following commands each in their own terminal.
+activated run the following commands each in their own terminal after
+using `source venv/bin/activate`.
 
-`./view_test.py`
+`./test_record_daemon.py`
 
-`./record_test.py`
+`./test_control_app.py`
+
+`./test_view_app.py`
 
 The default URL for the viewing application is
 <http://localhost:8080>.  The default URL for the recording
@@ -110,10 +122,14 @@ application is <http://localhost:8081>.  These can be configured
 through `config_test.json`.  The database table can be deleted
 (DROPed!!! Careful!!!) by running the command.
 
-`./record_test.py --reset-database`
+`./test_record_daemon.py --reset-database`
 
-When first run the `record_test.py` application will create the table
-specified in `config_test.json`.
+When first run the `test_record_daemon.py` script will create the
+table specified in `config_test.json`.
+
+Convienience scripts are also provided in `test_control_app.sh`,
+`test_record_daemon.sh`, and `test_view_app.sh` that will restart the
+relevant program on a signal.
 
 # Future Improvements
 

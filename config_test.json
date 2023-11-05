@@ -15,6 +15,7 @@
     "POSTGRES_HOSTNAME":"<<enter postgres hostname, localhost if everyting is being run on one computer>>",
     "POSTGRES_PW":"<<Enter postgres password here>>",
     "POSTGRES_IMAGE_TABLE":"<<Enter the postgres image table here>>",
+    "RPYC_PORT":"<<Enter rpyc port here>>",
     "IMAGE_STORAGE_PATH":"<<Enter image storage path here>>",
     "IMAGE_INTERVAL":15,
     "CAPTURE_URL":"http://<<Enter ESP32 IP here>>/capture?_cb={}",

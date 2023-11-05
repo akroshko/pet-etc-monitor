@@ -2,14 +2,14 @@
 
 CONTINUE=1
 send_signal_to_process () {
-    echo "Terminating from record script upon user SIGINT"
+    echo "Terminating from view script upon user SIGINT"
     CONTINUE=
 }
 trap send_signal_to_process SIGINT
 
-if ! pkill -SIGTERM -f 'record_test.py' &>/dev/null; then
+if ! pkill -SIGTERM -f 'test_view_app.py' &>/dev/null; then
     if [[ "$@" != *--no-start* ]]; then
-        ./record_test.py 2>&1 | (trap '' SIGINT; tee test_record.out)
+        ./exec_venv.sh ./test_view_app.py 2>&1 | (trap '' SIGINT; tee test_view_app.out)
         while [[ -n "$CONTINUE" ]]; do
             sleep 2
             {
@@ -18,11 +18,11 @@ if ! pkill -SIGTERM -f 'record_test.py' &>/dev/null; then
                 done
                 echo "================================================================================================================================================================";
                 echo "================================================================================================================================================================";
-                echo "==== Record Server Restart =====================================================================================================================================";
+                echo "==== View App Restart =======================================================================================================================================";
                 echo "================================================================================================================================================================";
                 echo "================================================================================================================================================================";
-                ./record_test.py 2>&1
-            } | (trap '' SIGINT; tee test_record.out)
+                ./exec_venv.sh ./test_view_app.py 2>&1
+            } | (trap '' SIGINT; tee test_view_app.out)
         done
     fi
 fi

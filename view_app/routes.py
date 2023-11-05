@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """ The routes for the view app.
 """
 
@@ -196,7 +197,7 @@ def create_view_routes(app,app_config,
             return
         return jsonify(response_dict)
 
-    @app.route("/recording_status",methods=["Get"], strict_slashes=False)
+    @app.route("/recording_status",methods=["GET"], strict_slashes=False)
     def get_recording_status():
         """Get the recording status.
 

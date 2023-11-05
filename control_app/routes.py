@@ -6,16 +6,16 @@ import uuid
 from flask import redirect,url_for,\
                   send_from_directory,\
                   jsonify
+import rpyc
 
 from common.db_interface import db_get_connection,db_release_connection,\
                                 db_query_image_logs
 
-from record_background import CAPTURE_EVENT
-
+RPYC_PORT=10262
 DEBUG_UNIQUE_ID=str(uuid.uuid4())
 
-def create_record_routes(app,app_config,
-                         db_connection_pool):
+def create_control_routes(app,app_config,
+                          db_connection_pool):
     """ Create routes for the record app.
     """
     @app.route("/", methods=["GET"], strict_slashes=False)
@@ -43,7 +43,9 @@ def create_record_routes(app,app_config,
         """Route to get the recording status.
 
         """
-        is_capturing=CAPTURE_EVENT.is_set()
+        conn=rpyc.connect("localhost",port=RPYC_PORT)
+        is_capturing=conn.root.exposed_recording_status()
+        conn.close();
         if is_capturing:
             return "true"
         else:
@@ -54,7 +56,9 @@ def create_record_routes(app,app_config,
         """Route to start recording.
 
         """
-        CAPTURE_EVENT.set()
+        conn=rpyc.connect("localhost",port=RPYC_PORT)
+        conn.root.exposed_start_recording()
+        conn.close();
         return "started with success"
 
     @app.route("/stop_record", methods=["PUT"], strict_slashes=False)
@@ -62,7 +66,9 @@ def create_record_routes(app,app_config,
         """Route to stop recording.
 
         """
-        CAPTURE_EVENT.clear()
+        conn=rpyc.connect("localhost",port=RPYC_PORT)
+        conn.root.exposed_stop_recording()
+        conn.close();
         return "stopped with success"
 
     @app.route("/debug_uuid", methods=["GET"], strict_slashes=False)

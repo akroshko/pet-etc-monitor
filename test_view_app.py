@@ -1,5 +1,5 @@
-#!/opt/python-venv-global/venv-flask-test/bin/python3
-"""Executable to run script to run the view_app Flask app.
+#!/usr/bin/env python3
+"""Executable script to run the view_app Flask app.
 """
 
 import logging

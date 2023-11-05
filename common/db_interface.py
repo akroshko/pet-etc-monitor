@@ -1,4 +1,4 @@
-#!/opt/python-venv-global/venv-flask-test/bin/python3
+#!/usr/bin/env python3
 """The functions used for the database interface.
 
 For now I am not handling exceptions within this library, but instead
@@ -9,7 +9,8 @@ from collections import namedtuple
 
 import psycopg2
 import psycopg2.pool
-import psycopg2.sql
+# TODO: remove next update?
+# import psycopg2.sql
 import psycopg2.extras
 
 """ Stores information related to the current database. """

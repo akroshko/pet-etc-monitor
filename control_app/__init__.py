@@ -1,4 +1,4 @@
-#!/opt/python-venv-global/venv-flask-test/bin/python3
+#!/usr/bin/env python3
 """The app that controls recording.
 
 """
@@ -13,6 +13,8 @@ import psycopg2
 
 from flask import Flask
 
+import rpyc
+
 from common.utility import log_info_database,\
                            log_critical_configuration_exception,\
                            log_critical_unexpected_exception,\
@@ -21,8 +23,9 @@ from common.utility import log_info_database,\
 
 from common.db_interface import db_open_connection_pool,db_close_connection_pool
 
-from record_background import RecordBackground,TERMINATE_EVENT
-from record_app.routes import create_record_routes
+from control_app.routes import create_control_routes
+
+RPYC_PORT=10262
 
 DB_CONNECTION_POOL=None
 
@@ -39,6 +42,7 @@ def cleanup_app():
     logging.info("APP cleanup handler.")
     if APP_RUNNING.is_set():
         logging.info("APP cleanup handler raising signal.")
+        # this sends the signal to flask app
         signal.raise_signal(signal.SIGINT)
     else:
         logging.info("APP cleanup handler not raising signal.")
@@ -57,20 +61,9 @@ def cleanup_db():
             log_critical_unexpected_exception(e)
         logging.info("Database cleanup handler done.")
 
-def cleanup_background():
-    """Close the background recording thread."""
-    logging.info("Background thread cleanup handler.")
-    if RECORD_THREAD:
-        TERMINATE_EVENT.set()
-        if RECORD_THREAD:
-            logging.info("Waiting on join to background thread.")
-            RECORD_THREAD.join()
-        logging.info("Background thread cleanup handler done.")
-
 def cleanup_handler():
     """Handle cleanup."""
     logging.info("Cleanup handler.")
-    cleanup_background()
     cleanup_db()
     logging.info("Cleanup handler done.")
 
@@ -98,22 +91,7 @@ def close_database_pool():
     db_close_connection_pool(DB_CONNECTION_POOL)
     log_info_database("Database connection pool closed")
 
-def setup_background(app_config):
-    """Setup the background recording task for the app."""
-    database_pool=DB_CONNECTION_POOL
-    try:
-        # set up signal
-        record_background_runnable=RecordBackground(app_config,DB_CONNECTION_POOL)
-        record_thread=threading.Thread(target=record_background_runnable.run,
-                                       args=[])
-        if record_thread:
-            record_thread.start()
-    except Exception as e:
-        logging.critical(e,exc_info=True)
-        return
-    return record_thread
-
-def create_record_app(use_wsgi=False):
+def create_control_app(use_wsgi=False):
     """Called from the actual script that runs the app in order to
     create the app."""
     global EXIT_CODE
@@ -159,15 +137,6 @@ def create_record_app(use_wsgi=False):
         EXIT_CODE=1
         return
     DATABASE_OPEN=True
-    RECORD_THREAD=setup_background(app_config)
-    if not RECORD_THREAD:
-        logging.critical("Unable to setup background recording.")
-        TERMINATE_EVENT.set()
-        EXIT_CODE=1
-        return
-    if TERMINATE_EVENT.is_set():
-        EXIT_CODE=1
-        return
     app = Flask(__name__)
     try:
         app.config.update(app_config)
@@ -177,6 +146,6 @@ def create_record_app(use_wsgi=False):
     except Exception as e:
         log_critical_unexpected_exception(e)
         return
-    create_record_routes(app,app_config,
-                         DB_CONNECTION_POOL)
+    create_control_routes(app,app_config,
+                          DB_CONNECTION_POOL)
     return app

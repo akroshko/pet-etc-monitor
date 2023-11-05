@@ -2,14 +2,14 @@
 
 CONTINUE=1
 send_signal_to_process () {
-    echo "Terminating from view script upon user SIGINT"
+    echo "Terminating from control app script upon user SIGINT"
     CONTINUE=
 }
 trap send_signal_to_process SIGINT
 
-if ! pkill -SIGTERM -f 'view_test.py' &>/dev/null; then
+if ! pkill -SIGTERM -f 'test_control_app.py' &>/dev/null; then
     if [[ "$@" != *--no-start* ]]; then
-        ./view_test.py 2>&1 | (trap '' SIGINT; tee test_view.out)
+        ./exec_venv.sh ./test_control_app.py 2>&1 | (trap '' SIGINT; tee test_control_app.out)
         while [[ -n "$CONTINUE" ]]; do
             sleep 2
             {
@@ -18,11 +18,11 @@ if ! pkill -SIGTERM -f 'view_test.py' &>/dev/null; then
                 done
                 echo "================================================================================================================================================================";
                 echo "================================================================================================================================================================";
-                echo "==== View Server Restart =======================================================================================================================================";
+                echo "==== Control App Restart =====================================================================================================================================";
                 echo "================================================================================================================================================================";
                 echo "================================================================================================================================================================";
-                ./view_test.py 2>&1
-            } | (trap '' SIGINT; tee test_view.out)
+                ./exec_venv.sh ./test_control_app.py 2>&1
+            } | (trap '' SIGINT; tee test_control_app.out)
         done
     fi
 fi

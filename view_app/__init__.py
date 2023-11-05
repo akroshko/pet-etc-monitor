@@ -1,4 +1,4 @@
-#!/opt/python-venv-global/venv-flask-test/bin/python3
+#!/usr/bin/env python3
 """
 """
 import atexit
