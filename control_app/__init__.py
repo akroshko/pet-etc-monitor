@@ -25,8 +25,6 @@ from common.db_interface import db_open_connection_pool,db_close_connection_pool
 
 from control_app.routes import create_control_routes
 
-RPYC_PORT=10262
-
 DB_CONNECTION_POOL=None
 
 APP_RUNNING=threading.Event()
@@ -100,10 +98,12 @@ def create_control_app(use_wsgi=False):
     global DATABASE_OPEN
     global RECORD_THREAD
     atexit.register(cleanup_handler)
-    signal.signal(signal.SIGTERM,signal_handler)
-    # TODO: do I want to catch this
-    # signal.signal(signal.SIGPIPE,signal_handler)
-    signal.signal(signal.SIGHUP,signal_handler)
+    # disable signal handlers for WSGI
+    if not use_wsgi:
+        signal.signal(signal.SIGTERM,signal_handler)
+        # TODO: do I want to catch this
+        # signal.signal(signal.SIGPIPE,signal_handler)
+        signal.signal(signal.SIGHUP,signal_handler)
     if use_wsgi:
         config_filename="config_wsgi.json"
     else:

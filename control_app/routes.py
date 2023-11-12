@@ -11,7 +11,6 @@ import rpyc
 from common.db_interface import db_get_connection,db_release_connection,\
                                 db_query_image_logs
 
-RPYC_PORT=10262
 DEBUG_UNIQUE_ID=str(uuid.uuid4())
 
 def create_control_routes(app,app_config,
@@ -43,7 +42,7 @@ def create_control_routes(app,app_config,
         """Route to get the recording status.
 
         """
-        conn=rpyc.connect("localhost",port=RPYC_PORT)
+        conn=rpyc.connect("localhost",port=app_config["RPYC_PORT"])
         is_capturing=conn.root.exposed_recording_status()
         conn.close();
         if is_capturing:
@@ -56,7 +55,7 @@ def create_control_routes(app,app_config,
         """Route to start recording.
 
         """
-        conn=rpyc.connect("localhost",port=RPYC_PORT)
+        conn=rpyc.connect("localhost",port=app_config["RPYC_PORT"])
         conn.root.exposed_start_recording()
         conn.close();
         return "started with success"
@@ -66,7 +65,7 @@ def create_control_routes(app,app_config,
         """Route to stop recording.
 
         """
-        conn=rpyc.connect("localhost",port=RPYC_PORT)
+        conn=rpyc.connect("localhost",port=app_config["RPYC_PORT"])
         conn.root.exposed_stop_recording()
         conn.close();
         return "stopped with success"

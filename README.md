@@ -106,9 +106,9 @@ to `CAPTURE_URL`, `STATUS_URL`, and `CONTROL_URL`.
 
 ## Running the test servers
 
-In the project directory with the appropriate virtual environment
-activated run the following commands each in their own terminal after
-using `source venv/bin/activate`.
+In the project directory with the appropriate virtual environment is
+activated using `source venv/bin/activate`, run the following commands
+each in their own terminal.
 
 `./test_record_daemon.py`
 
@@ -130,6 +130,23 @@ table specified in `config_test.json`.
 Convienience scripts are also provided in `test_control_app.sh`,
 `test_record_daemon.sh`, and `test_view_app.sh` that will restart the
 relevant program on a signal.
+
+## Running the test servers using WSGI
+
+In the project directory with the appropriate virtual environment is
+activated using `source venv/bin/activate`, run the following commands
+each in their own terminal.
+
+`./test_record_daemon.py`
+
+`mod_wsgi-express start-server --port 8081 test_control_app.wsgi`
+
+`mod_wsgi-express start-server --port 8080 test_view_app.wsgi`
+
+As above, the default URL for the viewing application is
+<http://localhost:8080>.  The default URL for the recording
+application is <http://localhost:8081>.  These can be configured
+through `config_wsgi.json`.
 
 # Future Improvements
 
