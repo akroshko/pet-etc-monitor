@@ -7,7 +7,7 @@ import json
 import uuid
 import urllib.request
 
-from flask import send_file,send_from_directory, \
+from flask import send_file, send_from_directory, \
                   request, jsonify, redirect,abort
 
 from common.utility import get_time_now,\
@@ -254,16 +254,22 @@ def create_view_routes(app,app_config,
                  }
 
         """
-        image_valid=db_query_result.image_valid
-        image_uuid=db_query_result.image_uuid
-        filename=db_query_result.filename
-        image_end_time=db_query_result.image_end_time
-        if image_end_time:
-            image_end_time=image_end_time.isoformat()
-        if image_uuid:
-            image_url="/image?image_uuid={}".format(image_uuid)
+        if db_query_result is None:
+            image_valid=None
+            image_uuid=None
+            filename=None
+            image_end_time=None
         else:
-            image_url="/empty_image"
+            image_valid=db_query_result.image_valid
+            image_uuid=db_query_result.image_uuid
+            filename=db_query_result.image_filename
+            image_end_time=db_query_result.image_end_time
+            if image_end_time:
+                image_end_time=image_end_time.isoformat()
+            if image_uuid:
+                image_url="/image?image_uuid={}".format(image_uuid)
+            else:
+                image_url="/empty_image"
         json_dict={"image_valid":image_valid,
                    "image_url":image_url,
                    "image_uuid":filename,

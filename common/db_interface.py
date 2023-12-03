@@ -20,10 +20,19 @@ DBContext=namedtuple("DBContext",
                       "image_table"])
 """ A named tuple of relevant items from the database. """
 DBImageReturn=namedtuple("DBImageReturn",
-                         ["image_valid",
-                          "image_uuid",
-                          "filename",
+                         ["image_uuid",
+                          "image_valid",
+                          "image_filename",
                           "image_end_time"])
+
+""" A named tuple of log info from database. """
+DBLogInfo=namedtuple("DBLogInfo",
+                     ["image_uuid",
+                      "image_valid",
+                      "image_start_time",
+                      "image_end_time",
+                      "status_start_time",
+                      "status_end_time"])
 
 def db_get_connection(app_config,connection_pool):
     """ Get a connection to the database.
@@ -72,6 +81,23 @@ def db_close_connection_pool(connection_pool):
     """
     if connection_pool:
         connection_pool.closeall()
+
+def db_query_namedtuple(db_context,query_string,query_namedtuple,query_arguments):
+    """
+    """
+    fields=query_namedtuple._fields
+    fields_query=','.join(fields)
+    query_string_actual=query_string.format(fields_query)
+    db_context.cursor.execute(query_string_actual,query_arguments)
+    if db_context.cursor.rowcount > 0:
+        db_result=db_context.cursor.fetchall()
+    else:
+        return []
+    db_tuples=[]
+    for row in db_result:
+        if row != []:
+            db_tuples.append(query_namedtuple._make(row))
+    return db_tuples
 
 def db_create_image_table(db_context,reset=False):
     """ Create the table of images.
@@ -134,18 +160,14 @@ def db_query_latest_image(db_context):
     @return A "DBImageReturn" object.
     """
     # get latest image
-    query=("SELECT image_uuid,image_filename,image_end_time FROM {} "
-           "WHERE image_valid=TRUE ORDER BY image_end_time DESC LIMIT 1;"
-           ).format(db_context.image_table)
-    db_context.cursor.execute(query)
-    fetch=db_context.cursor.fetchone()
-    if fetch is not None:
-        image_uuid=fetch[0]
-        filename=fetch[1]
-        image_end_time=fetch[2]
-        return DBImageReturn(True,image_uuid,filename,image_end_time)
+    query_string=("SELECT {{}} FROM {} "
+                  "WHERE image_valid=TRUE ORDER BY image_end_time DESC LIMIT 1;"
+                  ).format(db_context.image_table)
+    db_tuples=db_query_namedtuple(db_context,query_string,DBImageReturn,tuple())
+    if db_tuples is not []:
+        return DBImageReturn._make(db_tuples[0])
     else:
-        return DBImageReturn(False,None,None,None)
+        return None
 
 def db_query_past_image(db_context,before_time):
     """Query a past image in the database captured from before a
@@ -156,18 +178,14 @@ def db_query_past_image(db_context,before_time):
 
     @return A "DBImageReturn" object.
     """
-    query=("SELECT image_uuid,image_filename,image_end_time FROM {} "
-           "WHERE image_valid=TRUE and image_end_time <= %s ORDER BY image_end_time DESC LIMIT 1;"
-           ).format(db_context.image_table)
-    db_context.cursor.execute(query,(before_time,))
-    fetch=db_context.cursor.fetchone()
-    if fetch is not None:
-        image_uuid=fetch[0]
-        filename=fetch[1]
-        image_end_time=fetch[2]
-        return DBImageReturn(True,image_uuid,filename,image_end_time)
+    query_string=("SELECT {{}} FROM {} "
+                  "WHERE image_valid=TRUE and image_end_time <= %s ORDER BY image_end_time DESC LIMIT 1;"
+                  ).format(db_context.image_table)
+    db_tuples=db_query_namedtuple(db_context,query_string,DBImageReturn,(before_time,))
+    if db_tuples is not []:
+        return DBImageReturn._make(db_tuples[0])
     else:
-        return DBImageReturn(False,None,None,None)
+        return None
 
 def db_query_image_by_uuid(db_context,image_uuid):
     """Query an image based on it's uuid.
@@ -176,10 +194,10 @@ def db_query_image_by_uuid(db_context,image_uuid):
     @param image_uuid The uuid of the image.
     @return A filename corresponding to the image.
     """
-    query=("SELECT image_filename FROM {} "
-           "WHERE image_uuid=%s;"
-           ).format(db_context.image_table)
-    db_context.cursor.execute(query,(image_uuid,))
+    query_string=("SELECT image_filename FROM {} "
+                  "WHERE image_uuid=%s;"
+                  ).format(db_context.image_table)
+    db_context.cursor.execute(query_string,(image_uuid,))
     fetch=db_context.cursor.fetchone()
     image_filename=fetch[0]
     return image_filename
@@ -193,19 +211,8 @@ def db_query_image_logs(db_context):
     @return A list of dictionaries corresponding to each image in the
     log.
     """
-    query=("SELECT image_uuid,image_valid,image_start_time,image_end_time,status_start_time,status_end_time FROM {} "
-           "ORDER BY image_end_time ASC;").format(db_context.image_table)
-    db_context.cursor.execute(query,)
-    log_data=[]
-    fetch=db_context.cursor.fetchall()
-    for f in fetch:
-        log_data_element={}
-        log_data_element["image_uuid"]=f[0]
-        log_data_element["image_valid"]=f[1]
-        log_data_element["image_start_time"]=f[2]
-        log_data_element["image_end_time"]=f[3]
-        log_data_element["status_start_time"]=f[4]
-        log_data_element["status_end_time"]=f[5]
-        log_data.append(log_data_element)
-    log_data.reverse()
+    query_string=("SELECT {{}} FROM {} "
+                  "ORDER BY image_end_time ASC;").format(db_context.image_table)
+    db_tuples=db_query_namedtuple(db_context,query_string,DBLogInfo,tuple())
+    log_data=[tup._asdict() for tup in db_tuples]
     return log_data
