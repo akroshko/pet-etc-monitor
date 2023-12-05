@@ -16,7 +16,6 @@ import psycopg2.extras
 """ Stores information related to the current database. """
 DBContext=namedtuple("DBContext",
                      ["connection",
-                      "cursor",
                       "image_table"])
 """ A named tuple of relevant items from the database. """
 DBImageReturn=namedtuple("DBImageReturn",
@@ -43,9 +42,7 @@ def db_get_connection(app_config,connection_pool):
     """
     image_table=app_config["POSTGRES_IMAGE_TABLE"]
     connection=connection_pool.getconn()
-    cursor=connection.cursor()
     return DBContext(connection,
-                     cursor,
                      image_table)
 
 def db_release_connection(connection_pool,db_context):
@@ -54,7 +51,6 @@ def db_release_connection(connection_pool,db_context):
     @param connection_pool The database connecton pool.
     @param db_context A "DBContext" namedtuple.
     """
-    db_context.cursor.close()
     connection_pool.putconn(db_context.connection)
 
 def db_open_connection_pool(app_config):
@@ -88,15 +84,16 @@ def db_query_namedtuple(db_context,query_string,query_namedtuple,query_arguments
     fields=query_namedtuple._fields
     fields_query=','.join(fields)
     query_string_actual=query_string.format(fields_query)
-    db_context.cursor.execute(query_string_actual,query_arguments)
-    if db_context.cursor.rowcount > 0:
-        db_result=db_context.cursor.fetchall()
-    else:
-        return []
-    db_tuples=[]
-    for row in db_result:
-        if row != []:
-            db_tuples.append(query_namedtuple._make(row))
+    with db_context.connection.cursor() as cursor:
+        cursor.execute(query_string_actual,query_arguments)
+        if cursor.rowcount > 0:
+            db_result=cursor.fetchall()
+        else:
+            return []
+        db_tuples=[]
+        for row in db_result:
+            if row != []:
+                db_tuples.append(query_namedtuple._make(row))
     return db_tuples
 
 def db_create_image_table(db_context,reset=False):
@@ -107,7 +104,8 @@ def db_create_image_table(db_context,reset=False):
 
     """
     if reset:
-        db_context.cursor.execute("DROP TABLE IF EXISTS {};".format(db_context.image_table))
+        with db_context.connection.cursor() as cursor:
+            cursor.execute("DROP TABLE IF EXISTS {};".format(db_context.image_table))
     # create the table if not exist
     query=("CREATE TABLE IF NOT EXISTS {} "
            "(image_uuid uuid PRIMARY KEY, "
@@ -121,7 +119,8 @@ def db_create_image_table(db_context,reset=False):
            "image_height integer, "
            "image_width integer "
            ");").format(db_context.image_table)
-    db_context.cursor.execute(query)
+    with db_context.connection.cursor() as cursor:
+        cursor.execute(query)
     db_context.connection.commit()
 
 def db_insert_image(db_context,
@@ -147,9 +146,10 @@ def db_insert_image(db_context,
            "status_start_time,status_end_time,status_framesize,"
            "image_valid,image_height,image_width) "
            "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s);").format(db_context.image_table)
-    db_context.cursor.execute(query,(next_image_uuid,start_capture_time,end_capture_time,
-                                     new_fullpath,start_status_time,end_status_time,framesize_string,
-                                     image_valid,image_height,image_width))
+    with db_context.connection.cursor() as cursor:
+        cursor.execute(query,(next_image_uuid,start_capture_time,end_capture_time,
+                              new_fullpath,start_status_time,end_status_time,framesize_string,
+                              image_valid,image_height,image_width))
 
 
 def db_query_latest_image(db_context):
@@ -197,9 +197,10 @@ def db_query_image_by_uuid(db_context,image_uuid):
     query_string=("SELECT image_filename FROM {} "
                   "WHERE image_uuid=%s;"
                   ).format(db_context.image_table)
-    db_context.cursor.execute(query_string,(image_uuid,))
-    fetch=db_context.cursor.fetchone()
-    image_filename=fetch[0]
+    with db_context.connection.cursor() as cursor:
+        cursor.execute(query_string,(image_uuid,))
+        fetch=cursor.fetchone()
+        image_filename=fetch[0]
     return image_filename
 
 def db_query_image_logs(db_context):
