@@ -311,7 +311,8 @@
   */
  const NUMBER_IMAGES=6;
  const CURRENT_IMAGE_URL="/current?ct=";
- const PAST_IMAGE_URL="/past?seconds_ago={SECONDS_AGO}&ct=";
+ /* const PAST_IMAGE_URL="/past?seconds_ago={SECONDS_AGO}&ct="; */
+ const PAST_IMAGE_URL="/past?ct=";
  const INVALID_IMAGE_STRING="(no valid image)";
  const CURRENT_IMAGE_STRING="No delay";
  const CURRENT_CONTROL_STRING="No Delay";
@@ -436,8 +437,10 @@
    } else {
      url=past_url.replace("{SECONDS_AGO}",delay);
    }
+   let form_data=new FormData();
+   form_data.append("seconds_ago",delay);
    let req=new XMLHttpRequest();
-   req.open("GET", url, true);
+   req.open("POST", url, true);
    req.responsetype="json";
    req.onload = () => {
      let status=req.status;
@@ -447,7 +450,7 @@
        callback(status);
      }
    };
-   req.send();
+   req.send(form_data);
  }
  /**
   * A callback for when fetching the desired image is finished.

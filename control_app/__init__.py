@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 """The app that controls recording.
-
 """
 import atexit
 import json
@@ -89,7 +88,7 @@ def close_database_pool():
     db_close_connection_pool(DB_CONNECTION_POOL)
     log_info_database("Database connection pool closed")
 
-def create_control_app(use_wsgi=False):
+def create_control_app(config_filename=None):
     """Called from the actual script that runs the app in order to
     create the app."""
     global EXIT_CODE
@@ -99,15 +98,6 @@ def create_control_app(use_wsgi=False):
     global RECORD_THREAD
     atexit.register(cleanup_handler)
     # disable signal handlers for WSGI
-    if not use_wsgi:
-        signal.signal(signal.SIGTERM,signal_handler)
-        # TODO: do I want to catch this
-        # signal.signal(signal.SIGPIPE,signal_handler)
-        signal.signal(signal.SIGHUP,signal_handler)
-    if use_wsgi:
-        config_filename="config_wsgi.json"
-    else:
-        config_filename="config_test.json"
     try:
         with open(config_filename,"r") as fh:
             app_config=json.load(fh)
@@ -119,10 +109,10 @@ def create_control_app(use_wsgi=False):
         log_critical_unexpected_exception(e)
         EXIT_CODE=1
         return
-    #
     try:
         APP_ADDRESS=app_config["APP_RECORD_SERVE_ADDRESS"]
         APP_PORT=app_config["APP_RECORD_SERVE_PORT"]
+        use_signals=app_config["APP_USE_SIGNALS"]
         open_database_pool(app_config)
     except KeyError as e:
         log_critical_configuration_exception(e)
@@ -136,6 +126,11 @@ def create_control_app(use_wsgi=False):
         log_critical_unexpected_exception(e)
         EXIT_CODE=1
         return
+    if use_signals:
+        signal.signal(signal.SIGTERM,signal_handler)
+        # do I want to catch this?
+        # signal.signal(signal.SIGPIPE,signal_handler)
+        signal.signal(signal.SIGHUP,signal_handler)
     DATABASE_OPEN=True
     app = Flask(__name__)
     try:

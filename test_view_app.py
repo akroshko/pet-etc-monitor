@@ -12,7 +12,7 @@ logging.basicConfig(format=LOGGING_FORMAT_STRING,
                     level=logging.INFO)
 
 if __name__ == "__main__":
-    app=view_app.create_view_app()
+    app=view_app.create_view_app(config_filename="config_test.json")
     if not app:
         logging.critical("Unable to create view app")
         sys.exit(1)

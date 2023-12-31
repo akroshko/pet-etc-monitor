@@ -12,7 +12,7 @@ logging.basicConfig(format=LOGGING_FORMAT_STRING,
                     level=logging.INFO)
 
 if __name__ == "__main__":
-    app=control_app.create_control_app()
+    app=control_app.create_control_app(config_filename="config_test.json")
     if not app:
         logging.critical("Unable to create recording app.")
         sys.exit(control_app.EXIT_CODE)

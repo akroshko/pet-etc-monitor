@@ -1,6 +1,5 @@
 """ The routes for the record app.
 """
-
 import uuid
 
 from flask import redirect,url_for,\
@@ -44,11 +43,10 @@ def create_control_routes(app,app_config,
         """
         conn=rpyc.connect("localhost",port=app_config["RPYC_PORT"])
         is_capturing=conn.root.exposed_recording_status()
-        conn.close();
+        conn.close()
         if is_capturing:
             return "true"
-        else:
-            return "false"
+        return "false"
 
     @app.route("/start_record", methods=["PUT"], strict_slashes=False)
     def start_record():
@@ -57,7 +55,7 @@ def create_control_routes(app,app_config,
         """
         conn=rpyc.connect("localhost",port=app_config["RPYC_PORT"])
         conn.root.exposed_start_recording()
-        conn.close();
+        conn.close()
         return "started with success"
 
     @app.route("/stop_record", methods=["PUT"], strict_slashes=False)

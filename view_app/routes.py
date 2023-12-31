@@ -1,14 +1,12 @@
 #!/usr/bin/env python3
-""" The routes for the view app.
-"""
-
+""" The routes for the view app. """
 import datetime
 import json
 import uuid
 import urllib.request
 
 from flask import send_file, send_from_directory, \
-                  request, jsonify, redirect,abort
+                  request,jsonify,redirect
 
 from common.utility import get_time_now,\
                            log_error_configuration_exception,\
@@ -48,7 +46,6 @@ def get_admin_url(app_config):
 
 def get_log_url(app_config):
     """Get the url for for the log page of the recording app.
-
     """
     base_url=get_record_base_url(app_config)
     log_url="{}/log".format(base_url)
@@ -64,7 +61,7 @@ def create_view_routes(app,app_config,
         """
         return send_from_directory("./templates","index_template.html")
 
-    @app.route("/current/", methods=["GET"], strict_slashes=False)
+    @app.route("/current", methods=["POST"], strict_slashes=False)
     def current_image():
         """Get the latest image.
 
@@ -89,7 +86,7 @@ def create_view_routes(app,app_config,
         jsonified_dict=_create_json_return(db_query_result)
         return jsonified_dict
 
-    @app.route("/past", methods=["GET"])
+    @app.route("/past", methods=["POST"], strict_slashes=False)
     def past_image():
         """Get an image from the past.
 
@@ -103,10 +100,10 @@ def create_view_routes(app,app_config,
                  "image_uuid":...,
                  "image_time":...
                  }
-
         """
         try:
-            seconds_ago = int(request.args.get("seconds_ago", None))
+            # seconds_ago = int(request.args.get("seconds_ago", None))
+            seconds_ago=int(request.form["seconds_ago"])
         except ValueError as e:
             log_error_invalid_user_input_exception(e)
             return
@@ -125,7 +122,7 @@ def create_view_routes(app,app_config,
         jsonified_dict=_create_json_return(db_query_result)
         return jsonified_dict
 
-    @app.route("/image", methods=["GET"])
+    @app.route("/image", methods=["GET"], strict_slashes=False)
     def get_image():
         """Get a specific image.
 
@@ -149,7 +146,7 @@ def create_view_routes(app,app_config,
         db_release_connection(db_connection_pool,db_context)
         return send_file(image_filename)
 
-    @app.route("/empty_image", methods=["GET"], strict_slashes=False)
+    @app.route("/empty_image", methods=["POST"], strict_slashes=False)
     def get_empty_image():
         """Get an empty image.
 
@@ -160,7 +157,7 @@ def create_view_routes(app,app_config,
 
     @app.route("/admin", methods=["GET"], strict_slashes=False)
     def get_redirect_admin():
-        """Get admin, expecting a redirection.
+        """Get the admin page, expecting a redirection.
 
         """
         try:
@@ -175,7 +172,7 @@ def create_view_routes(app,app_config,
 
     @app.route("/log", methods=["GET"], strict_slashes=False)
     def get_log():
-        """Get log, expecting a redirection.
+        """Get the log page, expecting a redirection.
 
         """
         try:
@@ -187,8 +184,8 @@ def create_view_routes(app,app_config,
             log_error_unexpected_exception(e)
             return
         try:
-            response=urllib.request.urlopen(log_url)
-            response_dict=json.load(response)
+            with urllib.request.urlopen(log_url) as response:
+                response_dict=json.load(response)
         except urllib.error.URLError as e:
             log_error_app_url_exception(e)
             return
@@ -214,8 +211,8 @@ def create_view_routes(app,app_config,
             return
         # now fetch the record status
         try:
-            response=urllib.request.urlopen(record_url)
-            response_text=response.read()
+            with urllib.request.urlopen(record_url) as response:
+                response_text=response.read()
         except urllib.error.URLError as e:
             log_error_app_url_exception(e)
             return

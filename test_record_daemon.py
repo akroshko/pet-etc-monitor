@@ -26,9 +26,8 @@ logging.basicConfig(format=LOGGING_FORMAT_STRING,
                     level=logging.INFO)
 
 if __name__ == '__main__':
-    use_wsgi=False
     # open config first
-    if use_wsgi:
+    if '--use-wsgi' in sys.argv:
         config_filename="config_wsgi.json"
     else:
         config_filename="config_test.json"

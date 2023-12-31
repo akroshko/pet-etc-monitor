@@ -55,6 +55,7 @@ def signal_handler(*_,**__):
 
 def setup_background(app_config):
     """Setup the background recording task for the app."""
+    global DB_CONNECTION_POOL
     DB_CONNECTION_POOL=db_open_connection_pool(app_config)
     if DB_CONNECTION_POOL:
         try:
@@ -94,12 +95,18 @@ class RecordBackgroundRPYC(rpyc.Service):
         pass
 
     def exposed_recording_status(self):
+        """ Check the recording status.
+        """
         return CAPTURE_EVENT.is_set()
 
     def exposed_start_recording(self):
+        """ Start the recording.
+        """
         CAPTURE_EVENT.set()
 
     def exposed_stop_recording(self):
+        """ Stop the recording.
+        """
         CAPTURE_EVENT.clear()
 
 class RecordBackground():
@@ -217,7 +224,6 @@ class RecordBackground():
                     urllib.request.urlretrieve(self._capture_url.format(str(next_image_uuid)),
                                                new_fullpath)
                     end_capture_time=get_time_now()
-                    total_capture_time=end_capture_time-start_capture_time
                     self._log_capture(new_fullpath,start_capture_time,end_capture_time)
                     start_status_time=get_time_now()
                     with urllib.request.urlopen(self._status_url) as f:
@@ -227,7 +233,6 @@ class RecordBackground():
                         # TODO: check for invalid
                         framesize_number=status_dict["framesize"]
                         framesize_string=ESP32_FRAMESIZE[framesize_number]
-                    photocheck_start_time=get_time_now()
                     # check image
                     try:
                         with Image.open(new_fullpath,mode="r") as image:
@@ -247,7 +252,6 @@ class RecordBackground():
                     except Exception as e:
                         log_error_unexpected_exception(e)
                         image_valid=False
-                    photocheck_end_time=get_time_now()
                 except urllib.error.URLError as e:
                     log_error_recording_exception(e)
                 except (IOError,OSError) as e:

@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
-"""
+""" Entry point main module for the view app.
 """
 import atexit
 import json
 import logging
 import signal
-import sys
 import threading
 
 import psycopg2
@@ -81,7 +80,7 @@ def close_database_pool():
     db_close_connection_pool(DB_CONNECTION_POOL)
     log_info_database("Database connection pool closed")
 
-def create_view_app(use_wsgi=False):
+def create_view_app(config_filename=None):
     """ Called from the actual script that runs the app.
     """
     global EXIT_CODE
@@ -93,10 +92,6 @@ def create_view_app(use_wsgi=False):
     # TODO: do I want to catch this
     # signal.signal(signal.SIGPIPE,signal_handler)
     signal.signal(signal.SIGHUP,signal_handler)
-    if use_wsgi:
-        config_filename="config_wsgi.json"
-    else:
-        config_filename="config_test.json"
     #
     try:
         with open(config_filename,"r") as fh:
