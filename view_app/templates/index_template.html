@@ -144,7 +144,7 @@
               <option value=1>seconds</option>
               <option value=2>minutes</option>
               <option value=3>hours</option>
-            <select>
+            </select>
           </span>
         </p>
         <input class="control-delay-slider" type="range" min="0" max="60" oninput="update_controls_state_view_delay_number(1);">
@@ -160,7 +160,7 @@
               <option value=1>seconds</option>
               <option value=2>minutes</option>
               <option value=3>hours</option>
-            <select>
+            </select>
           </span>
         </p>
         <input class="control-delay-slider" type="range" min="0" max="60" oninput="update_controls_state_view_delay_number(2);">
@@ -176,7 +176,7 @@
               <option value=1>seconds</option>
               <option value=2>minutes</option>
               <option value=3>hours</option>
-            <select>
+            </select>
           </span>
         </p>
         <input class="control-delay-slider" type="range" min="0" max="60" oninput="update_controls_state_view_delay_number(3);">
@@ -192,7 +192,7 @@
               <option value=1>seconds</option>
               <option value=2>minutes</option>
               <option value=3>hours</option>
-            <select>
+            </select>
           </span>
         </p>
         <input class="control-delay-slider" type="range" min="0" max="60" oninput="update_controls_state_view_delay_number(4);">
@@ -208,7 +208,7 @@
               <option value=1>seconds</option>
               <option value=2>minutes</option>
               <option value=3>hours</option>
-            <select>
+            </select>
           </span>
         </p>
         <input class="control-delay-slider" type="range" min="0" max="60" oninput="update_controls_state_view_delay_number(5);">
@@ -224,7 +224,7 @@
               <option value=1>seconds</option>
               <option value=2>minutes</option>
               <option value=3>hours</option>
-            <select>
+            </select>
           </span>
         </p>
         <input class="control-delay-slider" type="range" min="0" max="60" oninput="update_controls_state_view_delay_number(6);">
@@ -303,381 +303,381 @@
       </tr>
     </table>
   </div>
-</body>
-
-<script type="text/javascript">
- /**
-  * Constants used in this script.
-  */
- const NUMBER_IMAGES=6;
- const CURRENT_IMAGE_URL="/current?ct=";
- /* const PAST_IMAGE_URL="/past?seconds_ago={SECONDS_AGO}&ct="; */
- const PAST_IMAGE_URL="/past?ct=";
- const INVALID_IMAGE_STRING="(no valid image)";
- const CURRENT_IMAGE_STRING="No delay";
- const CURRENT_CONTROL_STRING="No Delay";
- const SLIDER_UNIT_LABEL={1:"seconds",
-                          2:"minutes",
-                          3:"hours"}
- const CUSTOM_VIEW_STRING="custom";
- const ALARM_SECONDS=15;
- const SLIDER_UNIT_MULTIPLIER={1:1,
-                               2:60,
-                               3:3600}
- /**
-  * Presets for different amounts of delay to different images.
-  */
- var image_presets={"last_minute":{1:[1,0],
-                                   2:[1,10],
-                                   3:[1,20],
-                                   4:[1,30],
-                                   5:[1,45],
-                                   6:[2,1]},
-                    "last_5_minutes":{1:[1,0],
-                                      2:[2,1],
-                                      3:[2,2],
-                                      4:[2,3],
-                                      5:[2,4],
-                                      6:[2,5]},
-                    "last_hour":{1:[1,0],
-                                 2:[1,15],
-                                 3:[2,1],
-                                 4:[2,5],
-                                 5:[2,15],
-                                 6:[3,1]}};
- /**
-  * Variables to record the state based on the controls.
-  */
- var delay_times=(() => {
-   let new_object={}
-   for (let id_number=1;id_number<=NUMBER_IMAGES;id_number++) {
-     new_object[id_number]=null;
-   }
-   return new_object;
- })();
- var last_times={...delay_times};
-
- /**
-  * Functions to get common element ids.
-  */
- function get_image_container_id (image_id_number) {
-   return "image-"+image_id_number+"-id";
- }
- function get_image_caption_delay_value_id (image_id_number) {
-   return "image-caption-delay-value-"+image_id_number+"-id";
- }
- function get_image_caption_delay_id (image_id_number) {
-   return "image-caption-delay-"+image_id_number+"-id";
- }
- function get_control_delay_id (image_id_number) {
-   return "control-delay-container-"+image_id_number;
- }
-
- /**
-  * Functions to get create urls.
-  */
- function get_current_image_url () {
-   return CURRENT_IMAGE_URL + new Date().getTime();
- }
- function get_past_image_url () {
-   return PAST_IMAGE_URL + new Date().getTime();
- }
-
- /**
-  * Functions to get values of strings and captions.
-  */
- function get_image_delay_value (last_time_value,actual_delay_seconds) {
-   if (isNaN(last_time_value)) {
-     return NaN;
-   } else {
-     if (isNaN(actual_delay_seconds)) {
-       actual_delay_seconds=0;
+  <script type="text/javascript">
+   /**
+    * Constants used in this script.
+    */
+   const NUMBER_IMAGES=6;
+   const CURRENT_IMAGE_URL="/current?ct=";
+   /* const PAST_IMAGE_URL="/past?seconds_ago={SECONDS_AGO}&ct="; */
+   const PAST_IMAGE_URL="/past?ct=";
+   const INVALID_IMAGE_STRING="(no valid image)";
+   const CURRENT_IMAGE_STRING="No delay";
+   const CURRENT_CONTROL_STRING="No Delay";
+   /* const SLIDER_UNIT_LABEL={1:"seconds",
+    *                          2:"minutes",
+    *                          3:"hours"}; */
+   const CUSTOM_VIEW_STRING="custom";
+   const ALARM_SECONDS=15;
+   const SLIDER_UNIT_MULTIPLIER={1:1,
+                                 2:60,
+                                 3:3600};
+   /**
+    * Presets for different amounts of delay to different images.
+    */
+   var image_presets={"last_minute":{1:[1,0],
+                                     2:[1,10],
+                                     3:[1,20],
+                                     4:[1,30],
+                                     5:[1,45],
+                                     6:[2,1]},
+                      "last_5_minutes":{1:[1,0],
+                                        2:[2,1],
+                                        3:[2,2],
+                                        4:[2,3],
+                                        5:[2,4],
+                                        6:[2,5]},
+                      "last_hour":{1:[1,0],
+                                   2:[1,15],
+                                   3:[2,1],
+                                   4:[2,5],
+                                   5:[2,15],
+                                   6:[3,1]}};
+   /**
+    * Variables to record the state based on the controls.
+    */
+   var delay_times=(() => {
+     let new_object={};
+     for (let id_number=1;id_number<=NUMBER_IMAGES;id_number++) {
+       new_object[id_number]=null;
      }
-     return (((new Date().getTime()-last_time_value)/1000)-actual_delay_seconds);
-   }
- }
+     return new_object;
+   })();
+   var last_times={...delay_times};
 
- function get_image_delay_value_text (last_time_value,actual_delay_seconds) {
-   let caption_string=INVALID_IMAGE_STRING;
-   let delay_value=get_image_delay_value (last_time_value,actual_delay_seconds);
-   if (!isNaN(delay_value) && last_time_value) {
-     if (isNaN(actual_delay_seconds)) {
-       actual_delay_seconds=0;
-     }
-     let current_image_caption=delay_value.toFixed(1);
-     current_image_caption="(+"+current_image_caption+"s)";
-     caption_string=current_image_caption;
+   /**
+    * Functions to get common element ids.
+    */
+   function get_image_container_id (image_id_number) {
+     return "image-"+image_id_number+"-id";
    }
-   return caption_string;
- }
+   function get_image_caption_delay_value_id (image_id_number) {
+     return "image-caption-delay-value-"+image_id_number+"-id";
+   }
+   function get_image_caption_delay_id (image_id_number) {
+     return "image-caption-delay-"+image_id_number+"-id";
+   }
+   function get_control_delay_id (image_id_number) {
+     return "control-delay-container-"+image_id_number;
+   }
 
- function get_image_delay_text (actual_delay_seconds) {
-   if (actual_delay_seconds > 0) {
-     return "Delay "+actual_delay_seconds+"s";
-   } else {
-     return CURRENT_IMAGE_STRING;
+   /**
+    * Functions to get create urls.
+    */
+   function get_current_image_url () {
+     return CURRENT_IMAGE_URL + new Date().getTime();
    }
- }
- function get_control_delay_text (slider_value) {
-   if (parseInt(slider_value) > 0) {
-     let new_label=slider_value;
-     return new_label;
-   } else {
-     return CURRENT_CONTROL_STRING;
+   function get_past_image_url () {
+     return PAST_IMAGE_URL + new Date().getTime();
    }
- }
 
- /**
-  * Fetch the json that describes the desired image.
-  */
- function fetch_image_json (current_url, past_url, callback, image_id_number) {
-   let delay=delay_times[image_id_number];
-   if (delay == 0) {
-     url=current_url;
-   } else {
-     url=past_url.replace("{SECONDS_AGO}",delay);
-   }
-   let form_data=new FormData();
-   form_data.append("seconds_ago",delay);
-   let req=new XMLHttpRequest();
-   req.open("POST", url, true);
-   req.responsetype="json";
-   req.onload = () => {
-     let status=req.status;
-     if (status == 200) {
-       callback(null, req.response, image_id_number);
+   /**
+    * Functions to get values of strings and captions.
+    */
+   function get_image_delay_value (last_time_value,actual_delay_seconds) {
+     if (isNaN(last_time_value)) {
+       return NaN;
      } else {
-       callback(status);
-     }
-   };
-   req.send(form_data);
- }
- /**
-  * A callback for when fetching the desired image is finished.
-  */
- function fetch_image_json_callback (err, data, image_id_number) {
-   let image_id=get_image_container_id(image_id_number);
-   let caption_id=get_image_caption_delay_value_id(image_id_number);
-   if (err != null) {
-     console.error(err);
-   } else {
-     let json_data=JSON.parse(data);
-     const image_el = document.getElementById(image_id);
-     let past_image=json_data["image_url"];
-     if (json_data["image_valid"] == true) {
-       image_el.src=past_image;
-       let image_time=json_data["image_time"];
-       last_times[image_id_number]=new Date(image_time).getTime();
-     } else {
-       image_el.src=past_image;
-       last_times[image_id_number]=NaN;
+       if (isNaN(actual_delay_seconds)) {
+         actual_delay_seconds=0;
+       }
+       return (((new Date().getTime()-last_time_value)/1000)-actual_delay_seconds);
      }
    }
- }
- /**
-  * Fetch new versions of all the images.
-  */
- function fetch_images() {
-   for (let image_id_number=1;image_id_number<=NUMBER_IMAGES;image_id_number++) {
-     fetch_image_json(get_current_image_url(),
-                      get_past_image_url(),
-                      fetch_image_json_callback,
-                      image_id_number);
-   }
-   setTimeout(fetch_images,get_controls_reload_interval()*1000);
- }
- /*
-  * Update the times under the images.
-  */
- function update_image_times () {
-   for (let image_id_number=1;image_id_number<=NUMBER_IMAGES;image_id_number++) {
-     let last_time_id=get_image_caption_delay_value_id(image_id_number);
-     let last_time_value=last_times[image_id_number];
-     const current_caption_el = document.getElementById(last_time_id);
-     let image_caption_value_id=get_image_caption_delay_value_id(image_id_number);
-     let actual_delay_seconds=delay_times[image_id_number];
-     let reload_interval=get_controls_reload_interval();
-     let image_delay_value=get_image_delay_value(last_time_value,actual_delay_seconds);
-     let image_delay_value_text=get_image_delay_value_text(last_time_value,actual_delay_seconds);
-     current_caption_el.innerHTML=image_delay_value_text;
-     if (image_delay_value > (reload_interval + ALARM_SECONDS)) {
-       current_caption_el.style.color="red";
-     } else {
-       current_caption_el.style.color="";
-     }
-   }
- }
- /**
-  * Set the default values for the side.
-  */
- function default_sidebar () {
-   toggle_sidebar(true);
-   update_controls_preset();
-   fetch_update_recording_indicator();
- }
- /**
-  * Called to update the current state based on the sidebar.
-  */
- function update_state_from_controls () {
-   update_controls_reload_interval();
-   for (let image_id_number=1;image_id_number<=NUMBER_IMAGES;image_id_number++) {
-     update_controls_state_view_delay_number (image_id_number);
-   }
- }
- /**
-  * Called to toggle the sidebar on/off.
-  */
- function toggle_sidebar (force_sidebar) {
-   if (force_sidebar == true) {
-     document.getElementById("control-toggle-id").checked = true;
-   }
-   if (force_sidebar == false) {
-     document.getElementById("control-toggle-id").checked = false;
-   }
-   let checked=document.getElementById("control-toggle-id").checked;
-   if (checked) {
-     document.getElementById("control-container-id").style.display="block";
-     document.getElementById("control-container-id").style.width="25%";
-     document.getElementById("image-group-container-id").style.marginLeft="25%";
-   } else {
-     document.getElementById("control-container-id").style.display="none";
-     document.getElementById("control-container-id").style.width="0%";
-     document.getElementById("image-group-container-id").style.marginLeft="0%";
-   }
- }
- /**
-  * Update the reload_interval slider based on it's current value.
-  */
- function update_controls_reload_interval () {
-   let slider = document.getElementById("control-reload-interval-slider-id");
-   let label = document.getElementById("control-reload-interval-label-value-id");
-   let slider_value=slider.value;
-   label.innerHTML=slider_value;
- }
- /**
-  * Get the reload interval.
-  */
- function get_controls_reload_interval () {
-   let slider = document.getElementById("control-reload-interval-slider-id");
-   return parseInt(slider.value);
- }
- /**
-  * Update the elements and state for the image delay values.
-  */
- function update_controls_state_view_delay_number (image_id_number) {
-   update_controls_state_view_delay (image_id_number);
- }
- function update_controls_state_view_delay (image_id_number) {
-   let container_id=get_control_delay_id(image_id_number);
-   let image_caption_id=get_image_caption_delay_id(image_id_number);
-   let container = document.getElementById(container_id);
-   // the units
-   let slider_unit = container.getElementsByClassName("control-delay-unit-selector")[0];
-   let slider_unit_value=slider_unit.value;
-   let new_unit_label=SLIDER_UNIT_LABEL[slider_unit_value];
-   let new_unit_multiplier=SLIDER_UNIT_MULTIPLIER[slider_unit_value];
-   // the value
-   let slider_value_label = container.getElementsByClassName("control-delay-unit-label-value")[0];
-   let slider = container.getElementsByClassName("control-delay-slider")[0];
-   let slider_value=slider.value;
-   let new_delay_seconds=NaN;
-   let new_label=get_control_delay_text(slider_value);
-   slider_value_label.innerHTML=new_label;
-   // finish with slider values
-   let new_delay_value=parseInt(slider_value);
-   if (new_delay_value > 0) {
-     new_delay_seconds=new_delay_value*new_unit_multiplier;
-     delay_times[image_id_number]=new_delay_seconds;
-     slider_unit.style.display="block";
-   } else {
-     new_delay_seconds=0;
-     delay_times[image_id_number]=0;
-     slider_unit.style.display="none";
-   }
-   // update image labels
-   let image_caption=document.getElementById(image_caption_id);
-   let image_caption_label=get_image_delay_text(new_delay_seconds);
-   image_caption.innerHTML=image_caption_label;
- }
 
- /**
-  * Update preset elements and current state.  Or update based on custom.
-  */
- function update_controls_preset () {
-   // get the preset selector value
-   let view_type=document.getElementById("control-preset-type-id");
-   let view_type_value=view_type.value;
-   // TODO: error if not what I want
-   if (view_type_value != CUSTOM_VIEW_STRING && view_type_value in image_presets) {
-     // change values based on this
-     let current_preset=image_presets[view_type_value];
-     for (let image_id_number=1; image_id_number <= NUMBER_IMAGES; image_id_number++)  {
-       let view_delay_id=get_control_delay_id(image_id_number);
-       // TODO: refactor out
-       let preset_index=image_id_number;
-       let unit_value=current_preset[preset_index][0];
-       let value=current_preset[preset_index][1];
-       let container=document.getElementById(view_delay_id);
-       let selector_unit=container.getElementsByClassName("control-delay-unit-selector")[0];
-       selector_unit.value=unit_value;
-       selector_unit.disabled=true;
-       let slider = container.getElementsByClassName("control-delay-slider")[0];
-       slider.value=value;
-       slider.disabled=true;
+   function get_image_delay_value_text (last_time_value,actual_delay_seconds) {
+     let caption_string=INVALID_IMAGE_STRING;
+     let delay_value=get_image_delay_value (last_time_value,actual_delay_seconds);
+     if (!isNaN(delay_value) && last_time_value) {
+       if (isNaN(actual_delay_seconds)) {
+         actual_delay_seconds=0;
+       }
+       let current_image_caption=delay_value.toFixed(1);
+       current_image_caption="(+"+current_image_caption+"s)";
+       caption_string=current_image_caption;
      }
-   } else if (view_type_value == CUSTOM_VIEW_STRING) {
-     for (let image_id_number=1; image_id_number <= NUMBER_IMAGES; image_id_number++)  {
-       let view_delay_id=get_control_delay_id(image_id_number);
-       let container=document.getElementById(view_delay_id);
-       let selector_unit=container.getElementsByClassName("control-delay-unit-selector")[0];
-       selector_unit.disabled=false;
-       let slider = container.getElementsByClassName("control-delay-slider")[0];
-       slider.disabled=false;
-     }
-   } else {
-     console.error("Unexpected error updating preset controls!");
+     return caption_string;
    }
-   update_state_from_controls ();
- }
- /**
-  * Update the recording indicator.
-  */
- function fetch_update_recording_indicator() {
-   let req=new XMLHttpRequest();
-   req.open("GET", "/recording_status", true);
-   req.responsetype="json";
-   req.onload = () => {
-     let status=req.status;
-     const recording_indicator=document.getElementById("control-record-indicator-id");
-     if (status == 200) {
-       recording_json=JSON.parse(req.response);
-       if (recording_json["status"] == true) {
-         recording_indicator.style.backgroundColor="#199319";
-         recording_indicator.innerHTML="Recording...";
-       } else if (recording_json["status"] == false) {
-         recording_indicator.style.backgroundColor="darkorange";
-         recording_indicator.innerHTML="Stopped";
+
+   function get_image_delay_text (actual_delay_seconds) {
+     if (actual_delay_seconds > 0) {
+       return "Delay "+actual_delay_seconds+"s";
+     } else {
+       return CURRENT_IMAGE_STRING;
+     }
+   }
+   function get_control_delay_text (slider_value) {
+     if (parseInt(slider_value) > 0) {
+       let new_label=slider_value;
+       return new_label;
+     } else {
+       return CURRENT_CONTROL_STRING;
+     }
+   }
+
+   /**
+    * Fetch the json that describes the desired image.
+    */
+   function fetch_image_json (current_url, past_url, callback, image_id_number) {
+     let delay=delay_times[image_id_number];
+     let url;
+     if (delay == 0) {
+       url=current_url;
+     } else {
+       url=past_url.replace("{SECONDS_AGO}",delay);
+     }
+     let form_data=new FormData();
+     form_data.append("seconds_ago",delay);
+     let req=new XMLHttpRequest();
+     req.open("POST", url, true);
+     req.responsetype="json";
+     req.onload = () => {
+       let status=req.status;
+       if (status == 200) {
+         callback(null, req.response, image_id_number);
        } else {
-         recording_indicator.style.backgroundColor="red";
-         recording_indicator.innerHTML="Error: invalid";
+         callback(status);
+       }
+     };
+     req.send(form_data);
+   }
+   /**
+    * A callback for when fetching the desired image is finished.
+    */
+   function fetch_image_json_callback (err, data, image_id_number) {
+     let image_id=get_image_container_id(image_id_number);
+     /* let caption_id=get_image_caption_delay_value_id(image_id_number); */
+     if (err != null) {
+       console.error(err);
+     } else {
+       let json_data=JSON.parse(data);
+       const image_el = document.getElementById(image_id);
+       let past_image=json_data["image_url"];
+       if (json_data["image_valid"] == true) {
+         image_el.src=past_image;
+         let image_time=json_data["image_time"];
+         last_times[image_id_number]=new Date(image_time).getTime();
+       } else {
+         image_el.src=past_image;
+         last_times[image_id_number]=NaN;
+       }
+     }
+   }
+   /**
+    * Fetch new versions of all the images.
+    */
+   function fetch_images() {
+     for (let image_id_number=1;image_id_number<=NUMBER_IMAGES;image_id_number++) {
+       fetch_image_json(get_current_image_url(),
+                        get_past_image_url(),
+                        fetch_image_json_callback,
+                        image_id_number);
+     }
+     setTimeout(fetch_images,get_controls_reload_interval()*1000);
+   }
+   /*
+    * Update the times under the images.
+    */
+   function update_image_times () {
+     for (let image_id_number=1;image_id_number<=NUMBER_IMAGES;image_id_number++) {
+       let last_time_id=get_image_caption_delay_value_id(image_id_number);
+       let last_time_value=last_times[image_id_number];
+       const current_caption_el = document.getElementById(last_time_id);
+       /* let image_caption_value_id=get_image_caption_delay_value_id(image_id_number); */
+       let actual_delay_seconds=delay_times[image_id_number];
+       let reload_interval=get_controls_reload_interval();
+       let image_delay_value=get_image_delay_value(last_time_value,actual_delay_seconds);
+       let image_delay_value_text=get_image_delay_value_text(last_time_value,actual_delay_seconds);
+       current_caption_el.innerHTML=image_delay_value_text;
+       if (image_delay_value > (reload_interval + ALARM_SECONDS)) {
+         current_caption_el.style.color="red";
+       } else {
+         current_caption_el.style.color="";
+       }
+     }
+   }
+   /**
+    * Set the default values for the side.
+    */
+   function default_sidebar () {
+     toggle_sidebar(true);
+     update_controls_preset();
+     fetch_update_recording_indicator();
+   }
+   /**
+    * Called to update the current state based on the sidebar.
+    */
+   function update_state_from_controls () {
+     update_controls_reload_interval();
+     for (let image_id_number=1;image_id_number<=NUMBER_IMAGES;image_id_number++) {
+       update_controls_state_view_delay_number (image_id_number);
+     }
+   }
+   /**
+    * Called to toggle the sidebar on/off.
+    */
+   function toggle_sidebar (force_sidebar) {
+     if (force_sidebar == true) {
+       document.getElementById("control-toggle-id").checked = true;
+     }
+     if (force_sidebar == false) {
+       document.getElementById("control-toggle-id").checked = false;
+     }
+     let checked=document.getElementById("control-toggle-id").checked;
+     if (checked) {
+       document.getElementById("control-container-id").style.display="block";
+       document.getElementById("control-container-id").style.width="25%";
+       document.getElementById("image-group-container-id").style.marginLeft="25%";
+     } else {
+       document.getElementById("control-container-id").style.display="none";
+       document.getElementById("control-container-id").style.width="0%";
+       document.getElementById("image-group-container-id").style.marginLeft="0%";
+     }
+   }
+   /**
+    * Update the reload_interval slider based on it's current value.
+    */
+   function update_controls_reload_interval () {
+     let slider = document.getElementById("control-reload-interval-slider-id");
+     let label = document.getElementById("control-reload-interval-label-value-id");
+     let slider_value=slider.value;
+     label.innerHTML=slider_value;
+   }
+   /**
+    * Get the reload interval.
+    */
+   function get_controls_reload_interval () {
+     let slider = document.getElementById("control-reload-interval-slider-id");
+     return parseInt(slider.value);
+   }
+   /**
+    * Update the elements and state for the image delay values.
+    */
+   function update_controls_state_view_delay_number (image_id_number) {
+     update_controls_state_view_delay (image_id_number);
+   }
+   function update_controls_state_view_delay (image_id_number) {
+     let container_id=get_control_delay_id(image_id_number);
+     let image_caption_id=get_image_caption_delay_id(image_id_number);
+     let container = document.getElementById(container_id);
+     // the units
+     let slider_unit = container.getElementsByClassName("control-delay-unit-selector")[0];
+     let slider_unit_value=slider_unit.value;
+     /* let new_unit_label=SLIDER_UNIT_LABEL[slider_unit_value]; */
+     let new_unit_multiplier=SLIDER_UNIT_MULTIPLIER[slider_unit_value];
+     // the value
+     let slider_value_label = container.getElementsByClassName("control-delay-unit-label-value")[0];
+     let slider = container.getElementsByClassName("control-delay-slider")[0];
+     let slider_value=slider.value;
+     let new_delay_seconds=NaN;
+     let new_label=get_control_delay_text(slider_value);
+     slider_value_label.innerHTML=new_label;
+     // finish with slider values
+     let new_delay_value=parseInt(slider_value);
+     if (new_delay_value > 0) {
+       new_delay_seconds=new_delay_value*new_unit_multiplier;
+       delay_times[image_id_number]=new_delay_seconds;
+       slider_unit.style.display="block";
+     } else {
+       new_delay_seconds=0;
+       delay_times[image_id_number]=0;
+       slider_unit.style.display="none";
+     }
+     // update image labels
+     let image_caption=document.getElementById(image_caption_id);
+     let image_caption_label=get_image_delay_text(new_delay_seconds);
+     image_caption.innerHTML=image_caption_label;
+   }
+
+   /**
+    * Update preset elements and current state.  Or update based on custom.
+    */
+   function update_controls_preset () {
+     // get the preset selector value
+     let view_type=document.getElementById("control-preset-type-id");
+     let view_type_value=view_type.value;
+     // TODO: error if not what I want
+     if (view_type_value != CUSTOM_VIEW_STRING && view_type_value in image_presets) {
+       // change values based on this
+       let current_preset=image_presets[view_type_value];
+       for (let image_id_number=1; image_id_number <= NUMBER_IMAGES; image_id_number++)  {
+         let view_delay_id=get_control_delay_id(image_id_number);
+         // TODO: refactor out
+         let preset_index=image_id_number;
+         let unit_value=current_preset[preset_index][0];
+         let value=current_preset[preset_index][1];
+         let container=document.getElementById(view_delay_id);
+         let selector_unit=container.getElementsByClassName("control-delay-unit-selector")[0];
+         selector_unit.value=unit_value;
+         selector_unit.disabled=true;
+         let slider = container.getElementsByClassName("control-delay-slider")[0];
+         slider.value=value;
+         slider.disabled=true;
+       }
+     } else if (view_type_value == CUSTOM_VIEW_STRING) {
+       for (let image_id_number=1; image_id_number <= NUMBER_IMAGES; image_id_number++)  {
+         let view_delay_id=get_control_delay_id(image_id_number);
+         let container=document.getElementById(view_delay_id);
+         let selector_unit=container.getElementsByClassName("control-delay-unit-selector")[0];
+         selector_unit.disabled=false;
+         let slider = container.getElementsByClassName("control-delay-slider")[0];
+         slider.disabled=false;
        }
      } else {
-       recording_indicator.style.backgroundColor="red";
-       recording_indicator.innerHTML="Error: not found";
+       console.error("Unexpected error updating preset controls!");
      }
-   };
-   req.send();
- }
+     update_state_from_controls ();
+   }
+   /**
+    * Update the recording indicator.
+    */
+   function fetch_update_recording_indicator() {
+     let req=new XMLHttpRequest();
+     req.open("GET", "/recording_status", true);
+     req.responsetype="json";
+     req.onload = () => {
+       let status=req.status;
+       const recording_indicator=document.getElementById("control-record-indicator-id");
+       if (status == 200) {
+         let recording_json=JSON.parse(req.response);
+         if (recording_json["status"] == true) {
+           recording_indicator.style.backgroundColor="#199319";
+           recording_indicator.innerHTML="Recording...";
+         } else if (recording_json["status"] == false) {
+           recording_indicator.style.backgroundColor="darkorange";
+           recording_indicator.innerHTML="Stopped";
+         } else {
+           recording_indicator.style.backgroundColor="red";
+           recording_indicator.innerHTML="Error: invalid";
+         }
+       } else {
+         recording_indicator.style.backgroundColor="red";
+         recording_indicator.innerHTML="Error: not found";
+       }
+     };
+     req.send();
+   }
 
- ////////////////////////////////////////////////////////////////////////
- // this handles when things are updated
- document.addEventListener("DOMContentLoaded", (event) => {
-   default_sidebar();
-   fetch_images();
-   update_image_times();
-   setInterval(update_image_times, 100);                         // update delay counter every 100ms
-   setInterval(fetch_update_recording_indicator, 1000);          // check for recording every 1000ms
-   setTimeout(fetch_images,get_controls_reload_interval()*1000); // set initial timeout for fetching new images
- });
-</script>
+   ////////////////////////////////////////////////////////////////////////
+   // this handles when things are updated
+   document.addEventListener("DOMContentLoaded", (event) => {
+     default_sidebar();
+     fetch_images();
+     update_image_times();
+     setInterval(update_image_times, 100);                         // update delay counter every 100ms
+     setInterval(fetch_update_recording_indicator, 1000);          // check for recording every 1000ms
+     setTimeout(fetch_images,get_controls_reload_interval()*1000); // set initial timeout for fetching new images
+   });
+  </script>
+</body>
 </html>
