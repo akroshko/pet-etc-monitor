@@ -9,6 +9,7 @@
     "APP_RECORD_CLIENT_HOST":"localhost",
     "APP_RECORD_CLIENT_PORT":8081,
     "APP_RECORD_CLIENT_PATH":"",
+    "APP_USE_SIGNALS":true,
     "POSTGRES_DBNAME":"<<enter postgres database name here>>",
     "POSTGRES_USER":"<<enter postgres password here>>",
     "POSTGRES_PORT":"<<enter postgres port as an integer, the default is 5432>>",
