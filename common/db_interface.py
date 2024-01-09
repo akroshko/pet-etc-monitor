@@ -33,6 +33,32 @@ DBLogInfo=namedtuple("DBLogInfo",
                       "status_start_time",
                       "status_end_time"])
 
+""" A class of the data recorded with each image. """
+class RecordImageData():
+    def __init__(self):
+        self.next_image_uuid=None
+        self.start_capture_time=None
+        self.end_capture_time=None
+        self.new_fullpath=None
+        self.start_status_time=None
+        self.end_status_time=None
+        self.framesize_string=None
+        self.image_valid=False
+        self.image_width=None
+        self.image_height=None
+
+    def _as_tuple(self):
+        return (self.next_image_uuid,
+                self.start_capture_time,
+                self.end_capture_time,
+                self.new_fullpath,
+                self.start_status_time,
+                self.end_status_time,
+                self.framesize_string,
+                self.image_valid,
+                self.image_width,
+                self.image_height)
+
 def db_get_connection(app_config,connection_pool):
     """ Get a connection to the database.
 
@@ -124,33 +150,18 @@ def db_create_image_table(db_context,reset=False):
     db_context.connection.commit()
 
 def db_insert_image(db_context,
-                    next_image_uuid,start_capture_time,end_capture_time,
-                    new_fullpath,start_status_time,end_status_time,framesize_string,
-                    image_valid,image_height,image_width):
+                    record_image_data):
     """ Insert an image into the database.
 
     @param db_context A "DBContext" namedtuple.
-    @param next_image_uuid
-    @param start_capture_time
-    @param end_capture_time
-    @param new_fullpath
-    @param start_status_time
-    @param end_status_time
-    @param framesize_string,
-    @param image_valid
-    @param image_height
-    @param image_width
-
+    @param record_image_data
     """
     query=("INSERT INTO {} (image_uuid,image_start_time,image_end_time,image_filename,"
            "status_start_time,status_end_time,status_framesize,"
            "image_valid,image_height,image_width) "
            "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s);").format(db_context.image_table)
     with db_context.connection.cursor() as cursor:
-        cursor.execute(query,(next_image_uuid,start_capture_time,end_capture_time,
-                              new_fullpath,start_status_time,end_status_time,framesize_string,
-                              image_valid,image_height,image_width))
-
+        cursor.execute(query,record_image_data._as_tuple())
 
 def db_query_latest_image(db_context):
     """ Query the lastest image in the database.

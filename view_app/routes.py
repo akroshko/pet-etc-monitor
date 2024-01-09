@@ -23,6 +23,9 @@ DEBUG_UNIQUE_ID=str(uuid.uuid4())
 def get_record_base_url(app_config):
     """Get the base url for accessing the record app.
 
+    @param app_config
+
+    @return
     """
     return "http://{}:{}/{}".format(app_config["APP_RECORD_CLIENT_HOST"],
                              str(app_config["APP_RECORD_CLIENT_PORT"]),
@@ -31,6 +34,9 @@ def get_record_base_url(app_config):
 def get_recording_status_url(app_config):
     """Get the url for getting the recording status.
 
+    @param app_config
+
+    @return
     """
     base_url=get_record_base_url(app_config)
     record_url="{}/recording_status".format(base_url)
@@ -39,6 +45,9 @@ def get_recording_status_url(app_config):
 def get_admin_url(app_config):
     """Get the url for for the admin page of the recording app.
 
+    @param app_config
+
+    @return
     """
     base_url=get_record_base_url(app_config)
     admin_url="{}".format(base_url)
@@ -46,6 +55,10 @@ def get_admin_url(app_config):
 
 def get_log_url(app_config):
     """Get the url for for the log page of the recording app.
+
+    @param app_config
+
+    @return
     """
     base_url=get_record_base_url(app_config)
     log_url="{}/log".format(base_url)
@@ -54,6 +67,11 @@ def get_log_url(app_config):
 def create_view_routes(app,app_config,
                        db_connection_pool):
     """ Create routes for the view app.
+
+    @param app_config
+    @param db_connection_pool
+
+    @return
     """
     @app.route("/", methods=["GET"])
     def index():
@@ -75,6 +93,7 @@ def create_view_routes(app,app_config,
                  "image_time":...
                  }
 
+        @return
         """
         # db_query
         db_context=db_get_connection(app_config,db_connection_pool)
@@ -100,6 +119,8 @@ def create_view_routes(app,app_config,
                  "image_uuid":...,
                  "image_time":...
                  }
+
+        @return
         """
         try:
             # seconds_ago = int(request.args.get("seconds_ago", None))
@@ -129,7 +150,6 @@ def create_view_routes(app,app_config,
         The "image_uuid" parameter gives the uuid of the image to get.
 
         @return The file corresponding to the image.
-
         """
         image_uuid = request.args.get("image_uuid", None)
         try:
@@ -151,7 +171,6 @@ def create_view_routes(app,app_config,
         """Get an empty image.
 
         @return The file corresponding to the empty image.
-
         """
         return send_from_directory("./static","empty_1x1.png")
 
@@ -159,6 +178,7 @@ def create_view_routes(app,app_config,
     def get_redirect_admin():
         """Get the admin page, expecting a redirection.
 
+        @return
         """
         try:
             admin_url=get_admin_url(app_config)
@@ -174,6 +194,7 @@ def create_view_routes(app,app_config,
     def get_log():
         """Get the log page, expecting a redirection.
 
+        @return
         """
         try:
             log_url=get_log_url(app_config)
@@ -199,7 +220,6 @@ def create_view_routes(app,app_config,
         """Get the recording status.
 
         @return JSON {"status":...}
-
         """
         try:
             record_url=get_recording_status_url(app_config)
@@ -235,6 +255,7 @@ def create_view_routes(app,app_config,
         """For debugging purposes. Allows finding when the server has
         been restarted.
 
+        @return
         """
         return DEBUG_UNIQUE_ID
 
@@ -249,7 +270,6 @@ def create_view_routes(app,app_config,
                  "image_uuid":...,
                  "image_time":...
                  }
-
         """
         if db_query_result is None:
             image_valid=None

@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Record the camera in the background in a seperate thread.
 """
-
 import argparse
 import logging
 import json
@@ -23,11 +22,13 @@ from common.utility import get_time_now,log_critical_os_exception,log_error_unex
                            log_error_imagefile_exception, log_critical_configuration_exception
 from common.db_interface import db_create_image_table,db_insert_image,\
                                 db_get_connection,db_release_connection,\
-                                db_open_connection_pool,db_close_connection_pool
+                                db_open_connection_pool,db_close_connection_pool,\
+                                RecordImageData
 
 from common.hardware import ESP32_FRAMESIZE
 
 HELPSTRING=""
+NON_CAPTURING_DELAY=1
 
 # flag initially false
 TERMINATE_EVENT=threading.Event()
@@ -77,10 +78,9 @@ def cleanup_background(record_thread):
     logging.info("Background thread cleanup handler.")
     TERMINATE_EVENT.set()
     if record_thread:
-        if record_thread:
-            logging.info("Waiting on join to background thread.")
-            record_thread.join()
-        logging.info("Background thread cleanup handler done.")
+        logging.info("Waiting on join to background thread.")
+        record_thread.join()
+    logging.info("Background thread cleanup handler done.")
     db_close_connection_pool(DB_CONNECTION_POOL)
 
 class RecordBackgroundRPYC(rpyc.Service):
@@ -136,9 +136,18 @@ class RecordBackground():
         except Exception as e:
             log_critical_unexpected_exception(e)
             self._terminate_unsuccessful()
+        self._has_failed=False
 
     def _get_db_context(self):
         return self._db_context
+
+    def _cleanup_db(self):
+        try:
+            db_release_connection(self._db_connection_pool,self._db_context)
+        except psycopg2.OperationalError as e:
+            log_error_database_exception(e)
+        except Exception as e:
+            log_error_unexpected_exception(e)
 
     def _setup_arguments(self, argv):
         parser = argparse.ArgumentParser(description=HELPSTRING,
@@ -166,105 +175,160 @@ class RecordBackground():
         # create the full path for an image based on uuid
         return os.path.join(self._image_storage_path,new_filename)
 
-    def run(self):
-        """ Run the background recording.
-        """
-        # if this is only a simple  and quick test
-        if self._parser.test:
-            return
+    # component functions of run
+    def _run_create_image_storage_path(self):
         try:
             if not os.path.exists(self._image_storage_path):
                 os.makedirs(self._image_storage_path,exist_ok=True)
         except OSError as e:
             log_critical_os_exception(e)
-            self._terminate_unsuccessful()
+            self._has_failed=True
             return
         except Exception as e:
             log_critical_unexpected_exception(e)
-            self._terminate_unsuccessful()
+            self._has_failed=True
             return
+
+    def _run_init_reset_database(self):
         # drop old table if needed
         reset=bool(self._parser.reset_database)
-        # database is setup here, any uncaught exceptions in this
-        # block will stil allow it to be closed
+        # database is setup here
         try:
             db_create_image_table(self._get_db_context(),reset=reset)
         except psycopg2.OperationalError as e:
             log_critical_database_exception(e)
-            self._terminate_unsuccessful()
+            self._has_failed=True
             return
         except Exception as e:
             log_critical_unexpected_exception(e)
+            self._has_failed=True
+            return
+
+    def _run_capture_image(self,record_image_data):
+        try:
+            # capture the actual image
+            with urllib.request.urlopen(
+                    self._capture_url.format(
+                        str(record_image_data.next_image_uuid)),
+                    timeout=60) as response:
+                with open(record_image_data.new_fullpath,'wb') as f:
+                    f.write(response.read())
+            return True
+        except TimeoutError as e:
+            log_error_recording_exception(e)
+            return False
+        except urllib.error.URLError as e:
+            log_error_recording_exception(e)
+            return False
+        except (IOError,OSError) as e:
+            log_error_imagefile_exception(e)
+            return False
+        except Exception as e:
+            log_error_unexpected_exception(e)
+            return False
+
+    def _run_capture_status(self,record_image_data):
+        try:
+            with urllib.request.urlopen(self._status_url) as f:
+                record_image_data.end_status_time=get_time_now()
+                # TODO check for invalid
+                status_dict=json.load(f)
+                # TODO: check for invalid
+                framesize_number=status_dict["framesize"]
+                record_image_data.framesize_string=ESP32_FRAMESIZE[framesize_number]
+            return True
+        except TimeoutError as e:
+            log_error_recording_exception(e)
+            return False
+        except urllib.error.URLError as e:
+            log_error_recording_exception(e)
+            return False
+        except (IOError,OSError) as e:
+            log_error_imagefile_exception(e)
+            return False
+        except Exception as e:
+            log_error_unexpected_exception(e)
+            return False
+
+    def _run_verify_image(self,record_image_data):
+        # check image
+        image_valid=None
+        image_width=None
+        image_height=None
+        try:
+            with Image.open(record_image_data.new_fullpath,mode="r") as image:
+                image.verify()
+                # get width and height
+                record_image_data.image_width=image.width
+                record_image_data.image_height=image.height
+                record_image_data.image_valid=True
+            if self._record_rotate:
+                image=Image.open(record_image_data.new_fullpath)
+                image=image.rotate(angle=self._record_rotate,
+                                   expand=True)
+                image.save(record_image_data.new_fullpath)
+            return True
+        except (IOError,OSError) as e:
+            log_error_imagefile_exception(e)
+            record_image_data.image_valid=False
+        except Exception as e:
+            log_error_unexpected_exception(e)
+            record_image_data.image_valid=False
+        return True
+
+    def run(self):
+        """ Run the background recording until terminated.
+        """
+        # this is for simple and quick tests
+        if self._parser.test:
+            return
+        self._run_create_image_storage_path()
+        if self._has_failed:
             self._terminate_unsuccessful()
+            return
+        self._run_init_reset_database()
+        if self._has_failed:
+            self._terminate_unsuccessful()
+            self._cleanup_db()
             return
         try:
             # start capturing images
             while not TERMINATE_EVENT.is_set():
+                continue_loop=True
                 is_capturing=CAPTURE_EVENT.is_set()
                 if not is_capturing:
-                    time.sleep(1)
+                    time.sleep(NON_CAPTURING_DELAY)
                     continue
                 # setup initial values to be inserted into DB
                 # generally None or False until things get filled out
-                next_image_uuid=uuid.uuid4()
-                start_capture_time=get_time_now()
-                end_capture_time=None
+                record_image_data=RecordImageData()
+                record_image_data.next_image_uuid=uuid.uuid4()
+                record_image_data.start_capture_time=get_time_now()
                 # these don't involve any actual file operations
-                new_filename=self._create_image_filename(next_image_uuid)
-                new_fullpath=self._create_image_fullpath(new_filename)
-                start_status_time=None
-                end_status_time=None
-                framesize_string=None
-                image_valid=False
-                image_width=None
-                image_height=None
-                # TODO: see if true and false or timeout
-                try:
-                    # capture the actual image
-                    urllib.request.urlretrieve(self._capture_url.format(str(next_image_uuid)),
-                                               new_fullpath)
-                    end_capture_time=get_time_now()
-                    self._log_capture(new_fullpath,start_capture_time,end_capture_time)
-                    start_status_time=get_time_now()
-                    with urllib.request.urlopen(self._status_url) as f:
-                        end_status_time=get_time_now()
-                        # TODO check for invalid
-                        status_dict=json.load(f)
-                        # TODO: check for invalid
-                        framesize_number=status_dict["framesize"]
-                        framesize_string=ESP32_FRAMESIZE[framesize_number]
-                    # check image
-                    try:
-                        with Image.open(new_fullpath,mode="r") as image:
-                            image.verify()
-                            # get width and height
-                            image_width=image.width
-                            image_height=image.height
-                            image_valid=True
-                        if self._record_rotate:
-                            image=Image.open(new_fullpath)
-                            image=image.rotate(angle=self._record_rotate,
-                                               expand=True)
-                            image.save(new_fullpath)
-                    except (IOError,OSError) as e:
-                        log_error_imagefile_exception(e)
-                        image_valid=False
-                    except Exception as e:
-                        log_error_unexpected_exception(e)
-                        image_valid=False
-                except urllib.error.URLError as e:
-                    log_error_recording_exception(e)
-                except (IOError,OSError) as e:
-                    log_error_imagefile_exception(e)
-                except Exception as e:
-                    log_error_unexpected_exception(e)
+                record_image_data.new_fullpath=self._create_image_fullpath(
+                    self._create_image_filename(
+                        record_image_data.next_image_uuid))
+                # capture the actual image
+                continue_loop = continue_loop and self._run_capture_image(record_image_data)
+                if not continue_loop:
+                    continue
+                # capture the actual image
+                record_image_data.end_capture_time=get_time_now()
+                self._log_capture(record_image_data.new_fullpath,
+                                  record_image_data.start_capture_time,
+                                  record_image_data.end_capture_time)
+                record_image_data.start_status_time=get_time_now()
+                continue_loop=continue_loop and self._run_capture_status(record_image_data)
+                if not continue_loop:
+                    continue
+                # check image
+                # right now I still record invalid images
+                self._run_verify_image(record_image_data)
                 # for now failure to connect to db will kill the program
                 # since this is usually a configuration error
                 try:
                     db_insert_image(self._get_db_context(),
-                                    next_image_uuid,start_capture_time,end_capture_time,
-                                    new_fullpath,start_status_time,end_status_time,framesize_string,
-                                    image_valid,image_height,image_width)
+                                    record_image_data)
                     self._get_db_context().connection.commit()
                 except psycopg2.OperationalError as e:
                     log_error_database_exception(e)
@@ -272,10 +336,5 @@ class RecordBackground():
                     log_error_recording_exception(e)
         except Exception as e:
             log_error_unexpected_exception(e)
-        try:
-            db_release_connection(self._db_connection_pool,self._db_context)
-        except psycopg2.OperationalError as e:
-            log_error_database_exception(e)
-        except Exception as e:
-            log_error_unexpected_exception(e)
+        self._cleanup_db()
         print("Terminating background thread")
