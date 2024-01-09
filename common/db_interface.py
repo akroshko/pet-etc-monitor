@@ -9,8 +9,6 @@ from collections import namedtuple
 
 import psycopg2
 import psycopg2.pool
-# TODO: remove next update?
-# import psycopg2.sql
 import psycopg2.extras
 
 """ Stores information related to the current database. """
@@ -36,28 +34,40 @@ DBLogInfo=namedtuple("DBLogInfo",
 """ A class of the data recorded with each image. """
 class RecordImageData():
     def __init__(self):
-        self.next_image_uuid=None
-        self.start_capture_time=None
-        self.end_capture_time=None
-        self.new_fullpath=None
-        self.start_status_time=None
-        self.end_status_time=None
-        self.framesize_string=None
+        self.image_uuid=None
+        self.image_start_time=None
+        self.image_end_time=None
+        self.image_filename=None
+        self.status_start_time=None
+        self.status_end_time=None
+        self.status_framesize=None
         self.image_valid=False
         self.image_width=None
         self.image_height=None
 
-    def _as_tuple(self):
-        return (self.next_image_uuid,
-                self.start_capture_time,
-                self.end_capture_time,
-                self.new_fullpath,
-                self.start_status_time,
-                self.end_status_time,
-                self.framesize_string,
+    def _astuple(self):
+        return (self.image_uuid,
+                self.image_start_time,
+                self.image_end_time,
+                self.image_filename,
+                self.status_start_time,
+                self.status_end_time,
+                self.status_framesize,
                 self.image_valid,
                 self.image_width,
                 self.image_height)
+
+    def _fields(self):
+        return ("image_uuid",
+                "image_start_time",
+                "image_end_time",
+                "image_filename",
+                "status_start_time",
+                "status_end_time",
+                "status_framesize",
+                "image_valid",
+                "image_width",
+                "image_height")
 
 def db_get_connection(app_config,connection_pool):
     """ Get a connection to the database.
@@ -156,12 +166,20 @@ def db_insert_image(db_context,
     @param db_context A "DBContext" namedtuple.
     @param record_image_data
     """
-    query=("INSERT INTO {} (image_uuid,image_start_time,image_end_time,image_filename,"
-           "status_start_time,status_end_time,status_framesize,"
-           "image_valid,image_height,image_width) "
+    query=("INSERT INTO {} "
+           "(image_uuid,"
+           "image_start_time,"
+           "image_end_time,"
+           "image_filename,"
+           "status_start_time,"
+           "status_end_time,"
+           "status_framesize,"
+           "image_valid,"
+           "image_height,"
+           "image_width) "
            "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s);").format(db_context.image_table)
     with db_context.connection.cursor() as cursor:
-        cursor.execute(query,record_image_data._as_tuple())
+        cursor.execute(query,record_image_data._astuple())
 
 def db_query_latest_image(db_context):
     """ Query the lastest image in the database.

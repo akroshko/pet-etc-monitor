@@ -17,9 +17,15 @@ import time
 import rpyc
 
 from common.db_interface import db_open_connection_pool,db_close_connection_pool
-from common.utility import log_critical_configuration_exception,log_critical_unexpected_exception,LOGGING_FORMAT_STRING
-from record_daemon import RecordBackground,TERMINATE_EVENT,CAPTURE_EVENT,\
-                          cleanup_handler,signal_handler,setup_background,\
+from common.utility import log_critical_configuration_exception,\
+                           log_critical_unexpected_exception,\
+                           LOGGING_FORMAT_STRING
+from record_daemon import RecordBackground,\
+                          TERMINATE_EVENT,\
+                          CAPTURE_EVENT,\
+                          cleanup_handler,\
+                          signal_handler,\
+                          setup_background,\
                           RecordBackgroundRPYC
 
 logging.basicConfig(format=LOGGING_FORMAT_STRING,
