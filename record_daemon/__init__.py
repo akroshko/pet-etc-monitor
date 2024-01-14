@@ -37,66 +37,26 @@ from common.hardware import ESP32_FRAMESIZE
 HELPSTRING=""
 NON_CAPTURING_DELAY=1
 
-"""Flag to globally indicate the program is terminating. """
-TERMINATE_EVENT=threading.Event()
-TERMINATE_EVENT.clear()
-"""Flag to globally indicate whether the program is capturing. """
-CAPTURE_EVENT=threading.Event()
-CAPTURE_EVENT.set()
+class ProgramContext:
+    def __init__(self):
+        self.rpyc_server=None
+        self.record_background=None
+        # flag to indicate the program is terminating
+        self.terminate_event=threading.Event()
+        self.terminate_event.clear()
 
-DB_CONNECTION_POOL=None
-RECORD_THREAD=None
-RPYC_SERVER=None
+    def cleanup(self):
+        self.terminate_event.set()
+        if self.rpyc_server:
+            self.rpyc_server.close()
+        self.record_background.cleanup()
 
-def cleanup_handler():
-    """Handle cleanup."""
-    logging.info("Cleanup handler.")
-    if RPYC_SERVER:
-        RPYC_SERVER.close()
-    cleanup_background(RECORD_THREAD)
-    logging.info("Cleanup handler done.")
-
-def signal_handler(*_,**__):
-    """Handle cleanup from a signal."""
-    logging.info("Cleanup signal.")
-    cleanup_handler()
-    logging.info("Signal handler done.")
-
-def setup_background(app_config):
-    """Setup the background recording task for the app.
-
-    Args:
-        app_config: Dictionary containing the application configuration.
-    """
-    global DB_CONNECTION_POOL
-    DB_CONNECTION_POOL=db_open_connection_pool(app_config)
-    if DB_CONNECTION_POOL:
-        try:
-            # set up signal
-            record_background_runnable=RecordBackground(app_config,DB_CONNECTION_POOL)
-            record_thread=threading.Thread(target=record_background_runnable.run,
-                                           args=[])
-            if record_thread:
-                record_thread.start()
-        except Exception as e:
-            logging.critical(e,exc_info=True)
-            return None
-        return record_thread
-    return None
-
-def cleanup_background(record_thread):
-    """Close the background recording thread.
-
-    Args:
-        record_thread: The thread used for recording.
-    """
-    logging.info("Background thread cleanup handler.")
-    TERMINATE_EVENT.set()
-    if record_thread:
-        logging.info("Waiting on join to background thread.")
-        record_thread.join()
-    logging.info("Background thread cleanup handler done.")
-    db_close_connection_pool(DB_CONNECTION_POOL)
+    def signal_handler(self,*_,**__):
+        """Handle cleanup from a signal."""
+        logging.info("Cleanup signal.")
+        self.cleanup()
+        logging.info("Signal handler done.")
+PROGRAM_CONTEXT=ProgramContext()
 
 class RecordBackgroundRPYC(rpyc.Service):
     """The RPC server for communicating with other parts of the application."""
@@ -111,34 +71,31 @@ class RecordBackgroundRPYC(rpyc.Service):
 
     def exposed_recording_status(self):
         """Check the recording status. """
-        return CAPTURE_EVENT.is_set()
+        return PROGRAM_CONTEXT.record_background.capture_event.is_set()
 
     def exposed_start_recording(self):
         """Start the recording. """
-        CAPTURE_EVENT.set()
+        PROGRAM_CONTEXT.record_background.capture_event.set()
 
     def exposed_stop_recording(self):
         """Stop the recording. """
-        CAPTURE_EVENT.clear()
+        PROGRAM_CONTEXT.record_background.capture_event.clear()
 
 class RecordBackground():
-    """Class to encompass all things needed for background recording. """
-    def __init__(self,app_config,db_connection_pool):
+    """Class to encapsulate the recording thread and database connection. """
+    def __init__(self,app_config):
         """
+        Setup the background recording task for the app.
+
         Args:
           app_config: Dictionary containing the application configuration.
-          db_connection_pool: The connection pool for the database.
         """
-        if TERMINATE_EVENT.is_set():
-            return
+        self.record_thread=None
+        # flag to indicate whether the program is capturing
+        self.capture_event=threading.Event()
+        self.capture_event.set()
         try:
-            self._db_connection_pool=db_connection_pool
-            self._db_context=db_get_connection(app_config,db_connection_pool)
-        except Exception as e:
-            log_critical_database_exception(e)
-            self._terminate_unsuccessful()
-        try:
-            self._parser=self._setup_arguments(sys.argv[1:])
+            self._parser=self._init_arguments(sys.argv[1:])
             self._image_storage_path=app_config["IMAGE_STORAGE_PATH"]
             self._capture_url=app_config["CAPTURE_URL"]
             self._status_url=app_config["STATUS_URL"]
@@ -149,22 +106,29 @@ class RecordBackground():
         except KeyError as e:
             log_critical_configuration_exception(e)
             self._terminate_unsuccessful()
+            return
         except Exception as e:
             log_critical_unexpected_exception(e)
             self._terminate_unsuccessful()
-
-    def _get_db_context(self):
-        return self._db_context
-
-    def _cleanup_db(self):
+            return
         try:
-            db_release_connection(self._db_connection_pool,self._db_context)
-        except psycopg2.OperationalError as e:
-            log_error_database_exception(e)
+            self._db_connection_pool=db_open_connection_pool(app_config)
+            self._db_context=db_get_connection(app_config,self._db_connection_pool)
         except Exception as e:
-            log_error_unexpected_exception(e)
+            log_critical_database_exception(e)
+            self._terminate_unsuccessful()
+            return
+        try:
+            record_thread=threading.Thread(target=self.run,
+                                           args=[])
+            self.record_thread=record_thread
+            if record_thread:
+                record_thread.start()
+        except Exception as e:
+            logging.critical(e,exc_info=True)
+            return
 
-    def _setup_arguments(self, argv):
+    def _init_arguments(self, argv):
         parser = argparse.ArgumentParser(description=HELPSTRING,
                                          formatter_class=argparse.RawTextHelpFormatter)
         parser.add_argument("--dry-run",
@@ -175,12 +139,36 @@ class RecordBackground():
                             help="Drop database tables and rebuild them.")
         return parser.parse_args(argv)
 
-    def _terminate_unsuccessful(self):
-        TERMINATE_EVENT.set()
+    def cleanup(self):
+        """Close the background recording thread. Close the database
+        connection pool.
 
-    def _terminate_unsuccessful_db(self):
-        self._terminate_unsuccessful()
-        self._cleanup_db()
+        Args:
+            record_thread: The thread used for recording.
+
+        """
+        logging.info("Background thread cleanup handler.")
+        if self.record_thread:
+            logging.info("Waiting on join to background thread.")
+            self.record_thread.join()
+            self.record_thread=None
+        logging.info("Background thread cleanup handler done.")
+        self._cleanup_db_context()
+        db_close_connection_pool(self._db_connection_pool)
+        self._db_connection_pool=None
+
+    def _cleanup_db_context(self):
+        try:
+            if self._db_context:
+                db_release_connection(self._db_connection_pool,self._db_context)
+                self._db_context=None
+        except psycopg2.OperationalError as e:
+            log_error_database_exception(e)
+        except Exception as e:
+            log_error_unexpected_exception(e)
+
+    def _terminate_unsuccessful(self):
+        PROGRAM_CONTEXT.terminate_event.set()
 
     def _log_capture(self,record_image_data):
         # log an image capture
@@ -195,6 +183,62 @@ class RecordBackground():
     def _create_image_fullpath(self,new_filename):
         # create the full path for an image based on uuid
         return os.path.join(self._image_storage_path,new_filename)
+
+    def run(self):
+        """Run the background recording until terminated."""
+        # this is for simple and quick tests without capturing any images
+        if self._parser.dry_run:
+            return
+        if not self._run_create_image_storage_path():
+            self._terminate_unsuccessful()
+            return
+        if not self._run_init_reset_database():
+            self._terminate_unsuccessful()
+            return
+        try:
+            # start capturing images
+            while not PROGRAM_CONTEXT.terminate_event.is_set():
+                continue_loop=True
+                is_capturing=self.capture_event.is_set()
+                if not is_capturing:
+                    time.sleep(NON_CAPTURING_DELAY)
+                    continue
+                # setup initial values to be inserted into DB
+                # generally None or False until things get filled out
+                record_image_data=RecordImageData()
+                record_image_data.image_uuid=uuid.uuid4()
+                record_image_data.image_start_time=get_time_now()
+                # these don't involve any actual file operations
+                record_image_data.image_filename=self._create_image_fullpath(
+                    self._create_image_filename(
+                        record_image_data.image_uuid))
+                # capture the actual image
+                continue_loop = continue_loop and self._run_capture_image(record_image_data)
+                if not continue_loop:
+                    continue
+                # capture the actual image
+                record_image_data.image_end_time=get_time_now()
+                self._log_capture(record_image_data)
+                record_image_data.status_start_time=get_time_now()
+                continue_loop=continue_loop and self._run_capture_status(record_image_data)
+                if not continue_loop:
+                    continue
+                # check image
+                # right now I still record invalid images into the database
+                self._run_verify_image(record_image_data)
+                # for now failure to connect to db will kill the program
+                # since this is usually a configuration error
+                try:
+                    db_insert_image(self._db_context,
+                                    record_image_data)
+                    self._db_context.connection.commit()
+                except psycopg2.OperationalError as e:
+                    log_error_database_exception(e)
+                except Exception as e:
+                    log_error_recording_exception(e)
+        except Exception as e:
+            log_error_unexpected_exception(e)
+        print("Terminating background thread")
 
     # component functions of run
     def _run_create_image_storage_path(self):
@@ -216,7 +260,7 @@ class RecordBackground():
         reset=bool(self._parser.reset_database)
         # database is setup here
         try:
-            db_create_image_table(self._get_db_context(),reset=reset)
+            db_create_image_table(self._db_context,reset=reset)
             return True
         except psycopg2.OperationalError as e:
             log_critical_database_exception(e)
@@ -319,60 +363,3 @@ class RecordBackground():
             record_image_data.image_valid=False
             return
         return True
-
-    def run(self):
-        """Run the background recording until terminated."""
-        # this is for simple and quick tests without capturing any images
-        if self._parser.dry_run:
-            return
-        if not self._run_create_image_storage_path():
-            self._terminate_unsuccessful_db()
-            return
-        if not self._run_init_reset_database():
-            self._terminate_unsuccessful_db()
-            return
-        try:
-            # start capturing images
-            while not TERMINATE_EVENT.is_set():
-                continue_loop=True
-                is_capturing=CAPTURE_EVENT.is_set()
-                if not is_capturing:
-                    time.sleep(NON_CAPTURING_DELAY)
-                    continue
-                # setup initial values to be inserted into DB
-                # generally None or False until things get filled out
-                record_image_data=RecordImageData()
-                record_image_data.image_uuid=uuid.uuid4()
-                record_image_data.image_start_time=get_time_now()
-                # these don't involve any actual file operations
-                record_image_data.image_filename=self._create_image_fullpath(
-                    self._create_image_filename(
-                        record_image_data.image_uuid))
-                # capture the actual image
-                continue_loop = continue_loop and self._run_capture_image(record_image_data)
-                if not continue_loop:
-                    continue
-                # capture the actual image
-                record_image_data.image_end_time=get_time_now()
-                self._log_capture(record_image_data)
-                record_image_data.status_start_time=get_time_now()
-                continue_loop=continue_loop and self._run_capture_status(record_image_data)
-                if not continue_loop:
-                    continue
-                # check image
-                # right now I still record invalid images into the database
-                self._run_verify_image(record_image_data)
-                # for now failure to connect to db will kill the program
-                # since this is usually a configuration error
-                try:
-                    db_insert_image(self._get_db_context(),
-                                    record_image_data)
-                    self._get_db_context().connection.commit()
-                except psycopg2.OperationalError as e:
-                    log_error_database_exception(e)
-                except Exception as e:
-                    log_error_recording_exception(e)
-        except Exception as e:
-            log_error_unexpected_exception(e)
-        self._cleanup_db()
-        print("Terminating background thread")

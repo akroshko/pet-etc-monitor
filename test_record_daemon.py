@@ -14,18 +14,13 @@ import sys
 import threading
 import time
 
-import rpyc
+from rpyc.utils.server import ThreadedServer
 
-from common.db_interface import db_open_connection_pool,db_close_connection_pool
 from common.utility import log_critical_configuration_exception,\
                            log_critical_unexpected_exception,\
                            LOGGING_FORMAT_STRING
-from record_daemon import RecordBackground,\
-                          TERMINATE_EVENT,\
-                          CAPTURE_EVENT,\
-                          cleanup_handler,\
-                          signal_handler,\
-                          setup_background,\
+from record_daemon import PROGRAM_CONTEXT,\
+                          RecordBackground,\
                           RecordBackgroundRPYC
 
 logging.basicConfig(format=LOGGING_FORMAT_STRING,
@@ -49,23 +44,22 @@ if __name__ == '__main__':
         log_critical_unexpected_exception(e)
         EXIT_CODE=1
         sys.exit(EXIT_CODE)
-    atexit.register(cleanup_handler)
-    signal.signal(signal.SIGTERM,signal_handler)
-    signal.signal(signal.SIGHUP,signal_handler)
+    atexit.register(PROGRAM_CONTEXT.cleanup)
+    signal.signal(signal.SIGTERM,PROGRAM_CONTEXT.signal_handler)
+    signal.signal(signal.SIGHUP,PROGRAM_CONTEXT.signal_handler)
     # TODO: catch this signal but ensure helper scripts still work
-    # signal.signal(signal.SIGINT,signal_handler)
+    # signal.signal(signal.SIGINT,RecordBackground.signal_handler)
     # start up thread to record and DB
-    RECORD_THREAD=setup_background(app_config)
-    if not RECORD_THREAD:
+    PROGRAM_CONTEXT.record_background=RecordBackground(app_config)
+    if not PROGRAM_CONTEXT.record_background.record_thread:
         logging.critical("Unable to setup background recording.")
-        TERMINATE_EVENT.set()
+        PROGRAM_CONTEXT.terminate_event.set()
         EXIT_CODE=1
         sys.exit(EXIT_CODE)
-    if TERMINATE_EVENT.is_set():
+    if PROGRAM_CONTEXT.terminate_event.is_set():
         EXIT_CODE=1
         sys.exit(EXIT_CODE)
     # start up rpyc server
-    from rpyc.utils.server import ThreadedServer
     RPYC_SERVER = ThreadedServer(RecordBackgroundRPYC, port=rpyc_port, listener_timeout=120)
     RPYC_SERVER.start()
-    cleanup_handler()
+    PROGRAM_CONTEXT.cleanup()
