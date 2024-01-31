@@ -36,12 +36,12 @@ if __name__ == '__main__':
         with open(config_filename,"r") as fh:
             app_config=json.load(fh)
         rpyc_port=app_config["RPYC_PORT"]
-    except OSError as e:
-        log_critical_configuration_exception(e)
+    except OSError as err:
+        log_critical_configuration_exception(err)
         EXIT_CODE=1
         sys.exit(EXIT_CODE)
-    except Exception as e:
-        log_critical_unexpected_exception(e)
+    except Exception as err:
+        log_critical_unexpected_exception(err)
         EXIT_CODE=1
         sys.exit(EXIT_CODE)
     atexit.register(PROGRAM_CONTEXT.cleanup)

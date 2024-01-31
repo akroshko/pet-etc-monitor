@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """The app that controls recording.
 """
 import atexit
@@ -52,10 +51,10 @@ def cleanup_db():
         logging.info("Cleaning up database.")
         try:
             close_database_pool()
-        except psycopg2.OperationalError as e:
-            log_critical_database_exception(e)
-        except Exception as e:
-            log_critical_unexpected_exception(e)
+        except psycopg2.OperationalError as err:
+            log_critical_database_exception(err)
+        except Exception as err:
+            log_critical_unexpected_exception(err)
         logging.info("Database cleanup handler done.")
 
 def cleanup_handler():
@@ -101,12 +100,12 @@ def create_control_app(config_filename=None):
     try:
         with open(config_filename,"r") as fh:
             app_config=json.load(fh)
-    except OSError as e:
-        log_critical_configuration_exception(e)
+    except OSError as err:
+        log_critical_configuration_exception(err)
         EXIT_CODE=1
         return
-    except Exception as e:
-        log_critical_unexpected_exception(e)
+    except Exception as err:
+        log_critical_unexpected_exception(err)
         EXIT_CODE=1
         return
     try:
@@ -114,16 +113,16 @@ def create_control_app(config_filename=None):
         APP_PORT=app_config["APP_RECORD_SERVE_PORT"]
         use_signals=app_config["APP_USE_SIGNALS"]
         open_database_pool(app_config)
-    except KeyError as e:
-        log_critical_configuration_exception(e)
+    except KeyError as err:
+        log_critical_configuration_exception(err)
         EXIT_CODE=1
         return
-    except psycopg2.OperationalError as e:
-        log_critical_database_exception(e)
+    except psycopg2.OperationalError as err:
+        log_critical_database_exception(err)
         EXIT_CODE=1
         return
-    except Exception as e:
-        log_critical_unexpected_exception(e)
+    except Exception as err:
+        log_critical_unexpected_exception(err)
         EXIT_CODE=1
         return
     if use_signals:
@@ -135,11 +134,11 @@ def create_control_app(config_filename=None):
     app = Flask(__name__)
     try:
         app.config.update(app_config)
-    except KeyError as e:
-        log_critical_configuration_exception(e)
+    except KeyError as err:
+        log_critical_configuration_exception(err)
         return
-    except Exception as e:
-        log_critical_unexpected_exception(e)
+    except Exception as err:
+        log_critical_unexpected_exception(err)
         return
     create_control_routes(app,app_config,
                           DB_CONNECTION_POOL)

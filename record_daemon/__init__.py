@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Record the camera in the background in a seperate thread.
 """
 import argparse
@@ -99,23 +98,23 @@ class RecordBackground():
             self._image_storage_path=app_config["IMAGE_STORAGE_PATH"]
             self._capture_url=app_config["CAPTURE_URL"]
             self._status_url=app_config["STATUS_URL"]
-            if "RECORD_ROTATE" in app_config:
-                self._record_rotate=int(app_config["RECORD_ROTATE"])
+            if (temp:=app_config.get("RECORD_ROTATE")):
+                self._record_rotate=int(temp)
             else:
                 self._record_rotate=None
-        except KeyError as e:
-            log_critical_configuration_exception(e)
+        except KeyError as err:
+            log_critical_configuration_exception(err)
             self._terminate_unsuccessful()
             return
-        except Exception as e:
-            log_critical_unexpected_exception(e)
+        except Exception as err:
+            log_critical_unexpected_exception(err)
             self._terminate_unsuccessful()
             return
         try:
             self._db_connection_pool=db_open_connection_pool(app_config)
             self._db_context=db_get_connection(app_config,self._db_connection_pool)
-        except Exception as e:
-            log_critical_database_exception(e)
+        except Exception as err:
+            log_critical_database_exception(err)
             self._terminate_unsuccessful()
             return
         try:
@@ -124,8 +123,8 @@ class RecordBackground():
             self.record_thread=record_thread
             if record_thread:
                 record_thread.start()
-        except Exception as e:
-            logging.critical(e,exc_info=True)
+        except Exception as err:
+            logging.critical(err,exc_info=True)
             return
 
     def _init_arguments(self, argv):
@@ -162,19 +161,20 @@ class RecordBackground():
             if self._db_context:
                 db_release_connection(self._db_connection_pool,self._db_context)
                 self._db_context=None
-        except psycopg2.OperationalError as e:
-            log_error_database_exception(e)
-        except Exception as e:
-            log_error_unexpected_exception(e)
+        except psycopg2.OperationalError as err:
+            log_error_database_exception(err)
+        except Exception as err:
+            log_error_unexpected_exception(err)
 
     def _terminate_unsuccessful(self):
         PROGRAM_CONTEXT.terminate_event.set()
 
     def _log_capture(self,record_image_data):
         # log an image capture
-        logging.info("Captured {} from {} to {}".format(record_image_data.image_filename,
-                                                        record_image_data.image_start_time,
-                                                        record_image_data.image_end_time))
+        logging.info("Captured %s from %s to %s",
+                     record_image_data.image_filename,
+                     record_image_data.image_start_time,
+                     record_image_data.image_end_time)
 
     def _create_image_filename(self,image_uuid):
         # create an image filename from a uuid
@@ -232,12 +232,12 @@ class RecordBackground():
                     db_insert_image(self._db_context,
                                     record_image_data)
                     self._db_context.connection.commit()
-                except psycopg2.OperationalError as e:
-                    log_error_database_exception(e)
-                except Exception as e:
-                    log_error_recording_exception(e)
-        except Exception as e:
-            log_error_unexpected_exception(e)
+                except psycopg2.OperationalError as err:
+                    log_error_database_exception(err)
+                except Exception as err:
+                    log_error_recording_exception(err)
+        except Exception as err:
+            log_error_unexpected_exception(err)
         print("Terminating background thread")
 
     # component functions of run
@@ -247,11 +247,11 @@ class RecordBackground():
             if not os.path.exists(self._image_storage_path):
                 os.makedirs(self._image_storage_path,exist_ok=True)
             return True
-        except OSError as e:
-            log_critical_os_exception(e)
+        except OSError as err:
+            log_critical_os_exception(err)
             return None
-        except Exception as e:
-            log_critical_unexpected_exception(e)
+        except Exception as err:
+            log_critical_unexpected_exception(err)
             return None
 
     def _run_init_reset_database(self):
@@ -262,11 +262,11 @@ class RecordBackground():
         try:
             db_create_image_table(self._db_context,reset=reset)
             return True
-        except psycopg2.OperationalError as e:
-            log_critical_database_exception(e)
+        except psycopg2.OperationalError as err:
+            log_critical_database_exception(err)
             return None
-        except Exception as e:
-            log_critical_unexpected_exception(e)
+        except Exception as err:
+            log_critical_unexpected_exception(err)
             return None
 
     def _run_capture_image(self,record_image_data):
@@ -287,17 +287,17 @@ class RecordBackground():
                 with open(record_image_data.image_filename,'wb') as f:
                     f.write(response.read())
             return True
-        except TimeoutError as e:
-            log_error_recording_exception(e)
+        except TimeoutError as err:
+            log_error_recording_exception(err)
             return None
-        except urllib.error.URLError as e:
-            log_error_recording_exception(e)
+        except urllib.error.URLError as err:
+            log_error_recording_exception(err)
             return None
-        except (IOError,OSError) as e:
-            log_error_imagefile_exception(e)
+        except (IOError,OSError) as err:
+            log_error_imagefile_exception(err)
             return None
-        except Exception as e:
-            log_error_unexpected_exception(e)
+        except Exception as err:
+            log_error_unexpected_exception(err)
             return None
 
     def _run_capture_status(self,record_image_data):
@@ -318,17 +318,17 @@ class RecordBackground():
                 framesize_number=status_dict["framesize"]
                 record_image_data.status_framesize=ESP32_FRAMESIZE[framesize_number]
             return True
-        except TimeoutError as e:
-            log_error_recording_exception(e)
+        except TimeoutError as err:
+            log_error_recording_exception(err)
             return None
-        except urllib.error.URLError as e:
-            log_error_recording_exception(e)
+        except urllib.error.URLError as err:
+            log_error_recording_exception(err)
             return None
-        except (IOError,OSError) as e:
-            log_error_imagefile_exception(e)
+        except (IOError,OSError) as err:
+            log_error_imagefile_exception(err)
             return None
-        except Exception as e:
-            log_error_unexpected_exception(e)
+        except Exception as err:
+            log_error_unexpected_exception(err)
             return None
 
     def _run_verify_image(self,record_image_data):
@@ -354,12 +354,12 @@ class RecordBackground():
                                    expand=True)
                 image.save(record_image_data.image_filename)
             return True
-        except (IOError,OSError) as e:
-            log_error_imagefile_exception(e)
+        except (IOError,OSError) as err:
+            log_error_imagefile_exception(err)
             record_image_data.image_valid=False
             return
-        except Exception as e:
-            log_error_unexpected_exception(e)
+        except Exception as err:
+            log_error_unexpected_exception(err)
             record_image_data.image_valid=False
             return
         return True

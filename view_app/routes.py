@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """ The routes for the view app. """
 import datetime
 import json
@@ -99,8 +98,8 @@ def create_view_routes(app,app_config,
         db_context=db_get_connection(app_config,db_connection_pool)
         try:
             db_query_result=db_query_latest_image(db_context)
-        except Exception as e:
-            log_error_unexpected_exception(e)
+        except Exception as err:
+            log_error_unexpected_exception(err)
         db_release_connection(db_connection_pool,db_context)
         jsonified_dict=_create_json_return(db_query_result)
         return jsonified_dict
@@ -125,8 +124,8 @@ def create_view_routes(app,app_config,
         try:
             # seconds_ago = int(request.args.get("seconds_ago", None))
             seconds_ago=int(request.form["seconds_ago"])
-        except ValueError as e:
-            log_error_invalid_user_input_exception(e)
+        except ValueError as err:
+            log_error_invalid_user_input_exception(err)
             return
         time_now=get_time_now()
         seconds_ago=datetime.timedelta(seconds=seconds_ago)
@@ -135,8 +134,8 @@ def create_view_routes(app,app_config,
         db_context=db_get_connection(app.config,db_connection_pool)
         try:
             db_query_result=db_query_past_image(db_context,before_time)
-        except Exception as e:
-            log_error_unexpected_exception(e)
+        except Exception as err:
+            log_error_unexpected_exception(err)
             db_release_connection(db_connection_pool,db_context)
             return
         db_release_connection(db_connection_pool,db_context)
@@ -155,14 +154,14 @@ def create_view_routes(app,app_config,
         try:
             # throws a ValueError in case of an invalid UUID
             uuid.UUID(image_uuid,version=4)
-        except ValueError as e:
-            log_error_invalid_user_input_exception(e)
+        except ValueError as err:
+            log_error_invalid_user_input_exception(err)
             return
         db_context=db_get_connection(app.config,db_connection_pool)
         try:
             image_filename=db_query_image_by_uuid(db_context,image_uuid)
-        except Exception as e:
-            log_error_unexpected_exception(e)
+        except Exception as err:
+            log_error_unexpected_exception(err)
         db_release_connection(db_connection_pool,db_context)
         return send_file(image_filename)
 
@@ -183,11 +182,11 @@ def create_view_routes(app,app_config,
         try:
             admin_url=get_admin_url(app_config)
             return redirect(admin_url, code=302)
-        except KeyError as e:
-            log_error_configuration_exception(e)
+        except KeyError as err:
+            log_error_configuration_exception(err)
             return
-        except Exception as e:
-            log_error_unexpected_exception(e)
+        except Exception as err:
+            log_error_unexpected_exception(err)
             return
 
     @app.route("/log", methods=["GET"], strict_slashes=False)
@@ -198,20 +197,20 @@ def create_view_routes(app,app_config,
         """
         try:
             log_url=get_log_url(app_config)
-        except KeyError as e:
-            log_error_configuration_exception(e)
+        except KeyError as err:
+            log_error_configuration_exception(err)
             return
-        except Exception as e:
-            log_error_unexpected_exception(e)
+        except Exception as err:
+            log_error_unexpected_exception(err)
             return
         try:
             with urllib.request.urlopen(log_url) as response:
                 response_dict=json.load(response)
-        except urllib.error.URLError as e:
-            log_error_app_url_exception(e)
+        except urllib.error.URLError as err:
+            log_error_app_url_exception(err)
             return
-        except Exception as e:
-            log_error_unexpected_exception(e)
+        except Exception as err:
+            log_error_unexpected_exception(err)
             return
         return jsonify(response_dict)
 
@@ -223,21 +222,21 @@ def create_view_routes(app,app_config,
         """
         try:
             record_url=get_recording_status_url(app_config)
-        except KeyError as e:
-            log_error_configuration_exception(e)
+        except KeyError as err:
+            log_error_configuration_exception(err)
             return
-        except Exception as e:
-            log_error_unexpected_exception(e)
+        except Exception as err:
+            log_error_unexpected_exception(err)
             return
         # now fetch the record status
         try:
             with urllib.request.urlopen(record_url) as response:
                 response_text=response.read()
-        except urllib.error.URLError as e:
-            log_error_app_url_exception(e)
+        except urllib.error.URLError as err:
+            log_error_app_url_exception(err)
             return
-        except Exception as e:
-            log_error_unexpected_exception(e)
+        except Exception as err:
+            log_error_unexpected_exception(err)
             return
         response_dict={"status":None}
         try:
@@ -246,8 +245,8 @@ def create_view_routes(app,app_config,
                 response_dict["status"]=True
             else:
                 response_dict["status"]=False
-        except Exception as e:
-            log_error_unexpected_exception(e)
+        except Exception as err:
+            log_error_unexpected_exception(err)
         return jsonify(**response_dict)
 
     @app.route("/debug_uuid", methods=["GET"], strict_slashes=False)

@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Utility functions that do not have a specific package.
 
 """

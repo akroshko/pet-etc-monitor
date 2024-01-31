@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """The functions used for the database interface.
 
 For now I am not handling exceptions within this library, but instead
